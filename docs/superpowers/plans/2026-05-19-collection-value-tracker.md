@@ -55,7 +55,7 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** 9/9 phases shipped on branch `feat/collection-value-tracker` (not yet merged). Final whole-implementation review passed; 4 fixes applied in `870cbb0`. Full suite 96 tests passing, `npm run check` clean, `npm run build` succeeds.
+**Overall:** ✅ COMPLETE. 9/9 phases shipped; final whole-implementation review passed with 4 fixes applied in `870cbb0`. Merged to `main` (fast-forward) at `5160a56` on 2026-05-20; branch `feat/collection-value-tracker` deleted. Full suite 96 tests passing, `npm run check` clean, `npm run build` succeeds.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
