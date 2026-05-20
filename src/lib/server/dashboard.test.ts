@@ -21,8 +21,8 @@ describe('dashboardData', () => {
     expect(data.totalValue).toBe(13000);
     expect(data.itemCount).toBe(2);
     expect(data.byConsole).toEqual([
-      { console: 'N64', value: 8000 },
-      { console: 'SNES', value: 5000 }
+      { console: 'N64', count: 1, value: 8000 },
+      { console: 'SNES', count: 1, value: 5000 }
     ]);
   });
 
@@ -42,5 +42,22 @@ describe('dashboardData', () => {
     const data = dashboardData(db);
     expect(data.totalValue).toBe(0);
     expect(data.unvaluedCount).toBe(1);
+  });
+
+  it('counts items per console even when none are priced', () => {
+    const db = makeTestDb();
+    upsertGames(db, [
+      { id: 1, console: 'Game Boy', title: 'A', region: null, releaseYear: null },
+      { id: 2, console: 'Game Boy', title: 'B', region: null, releaseYear: null },
+      { id: 3, console: 'N64', title: 'C', region: null, releaseYear: null }
+    ]);
+    addItem(db, { gameId: 1, condition: 'loose' });
+    addItem(db, { gameId: 2, condition: 'cib' });
+    addItem(db, { gameId: 3, condition: 'loose' });
+    // No estimates at all — byConsole still reports a count per console.
+    expect(dashboardData(db).byConsole).toEqual([
+      { console: 'Game Boy', count: 2, value: 0 },
+      { console: 'N64', count: 1, value: 0 }
+    ]);
   });
 });

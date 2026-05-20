@@ -30,7 +30,7 @@
 </div>
 
 <section class="card">
-  <h2>Value by console</h2>
+  <h2>By console</h2>
   <ConsoleBar byConsole={data.byConsole} />
 </section>
 

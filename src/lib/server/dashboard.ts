@@ -7,7 +7,7 @@ export interface DashboardData {
   totalValue: number;
   itemCount: number;
   unvaluedCount: number;
-  byConsole: { console: string; value: number }[];
+  byConsole: { console: string; count: number; value: number }[];
   movers: Mover[];
   lastRefreshAt: Date | null;
 }
@@ -18,22 +18,27 @@ export function dashboardData(db: DB): DashboardData {
 
   let totalValue = 0;
   let unvaluedCount = 0;
-  const consoleTotals = new Map<string, number>();
+  // Every owned item contributes to its console's count; only valued items
+  // contribute to its value — so a console with no estimates still appears.
+  const byConsoleMap = new Map<string, { count: number; value: number }>();
 
   for (const item of items) {
     const est = estimates.get(`${item.gameId}:${item.condition}`) ?? null;
     const value = resolveItemValue(item, est);
+    const entry = byConsoleMap.get(item.console) ?? { count: 0, value: 0 };
+    entry.count += 1;
     if (value === null) {
       unvaluedCount++;
-      continue;
+    } else {
+      totalValue += value;
+      entry.value += value;
     }
-    totalValue += value;
-    consoleTotals.set(item.console, (consoleTotals.get(item.console) ?? 0) + value);
+    byConsoleMap.set(item.console, entry);
   }
 
-  const byConsole = [...consoleTotals.entries()]
-    .map(([console, value]) => ({ console, value }))
-    .sort((a, b) => b.value - a.value);
+  const byConsole = [...byConsoleMap.entries()]
+    .map(([console, { count, value }]) => ({ console, count, value }))
+    .sort((a, b) => b.value - a.value || b.count - a.count);
 
   return {
     totalValue,
