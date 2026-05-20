@@ -62,4 +62,23 @@ describe('browse page', () => {
     await fireEvent.click(getByLabelText(/homebrew/i));
     expect(queryByText('Homebrew Quest')).toBeInTheDocument();
   });
+  it('hides games dated before the console existed', async () => {
+    const gbData = {
+      consoles: [{ console: 'Game Boy', count: 2 }],
+      selectedConsole: 'Game Boy',
+      search: '',
+      games: [
+        { id: 10, title: 'Tetris', console: 'Game Boy', region: 'NTSC', releaseYear: 1989,
+          ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
+        { id: 11, title: 'Epoch Junk Hack', console: 'Game Boy', region: null, releaseYear: 1970,
+          ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
+      ]
+    };
+    const { queryByText, getByLabelText } = render(Page, { props: { data: gbData } });
+    // Game Boy launched in 1989; a 1970 date is impossible, so it is hidden.
+    expect(queryByText('Tetris')).toBeInTheDocument();
+    expect(queryByText('Epoch Junk Hack')).not.toBeInTheDocument();
+    await fireEvent.click(getByLabelText(/homebrew/i));
+    expect(queryByText('Epoch Junk Hack')).toBeInTheDocument();
+  });
 });

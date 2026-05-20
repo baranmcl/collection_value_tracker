@@ -3,17 +3,23 @@
   import { CONDITIONS, CONDITION_LABELS } from '$lib/types';
   import ConsoleSidebar from '$lib/components/ConsoleSidebar.svelte';
   import ConditionButton from '$lib/components/ConditionButton.svelte';
+  import { CONSOLE_RELEASE_YEAR } from '$lib/sources/platforms';
   let { data }: { data: PageData } = $props();
 
   type Show = 'all' | 'owned' | 'unowned' | 'loose' | 'cib' | 'new';
-  // No commercial GameCube / N64 / Game Boy game shipped this year or later,
-  // so a catalog entry dated >= this is homebrew/fan-made with near-total
-  // confidence. Games with no known year are never hidden.
+  // "Likely homebrew" = a release year that can't belong to a commercial
+  // game: dated >= 2010 (no console here had official releases that late),
+  // or dated before the console itself launched (placeholder/epoch dates).
+  // Games with no known year are never hidden.
   const HOMEBREW_YEAR = 2010;
 
   let filter = $state('');
   let show = $state<Show>('all');
   let hideHomebrew = $state(true);
+
+  // The selected console's launch year, if known — anything dated earlier
+  // is impossible and treated as homebrew/bad data.
+  let consoleStart = $derived(CONSOLE_RELEASE_YEAR[data.selectedConsole] ?? null);
 
   // Strip diacritics so a search for "pokemon" also matches "Pokémon".
   // Official Pokémon titles use an accented "é"; without folding, a plain
@@ -28,8 +34,10 @@
         const q = fold(filter.trim());
         if (q && !fold(game.title).includes(q)) return false;
 
-        if (hideHomebrew && game.releaseYear !== null && game.releaseYear >= HOMEBREW_YEAR) {
-          return false;
+        if (hideHomebrew && game.releaseYear !== null) {
+          // Too modern to be commercial, or older than the console itself.
+          if (game.releaseYear >= HOMEBREW_YEAR) return false;
+          if (consoleStart !== null && game.releaseYear < consoleStart) return false;
         }
 
         const owned = game.ownedConditions.length > 0;
@@ -72,7 +80,7 @@
       </label>
       <label class="check">
         <input type="checkbox" bind:checked={hideHomebrew} />
-        Hide likely homebrew ({HOMEBREW_YEAR}+)
+        Hide likely homebrew
       </label>
       <span class="match-count">{visibleGames.length} of {data.games.length}</span>
     </div>
