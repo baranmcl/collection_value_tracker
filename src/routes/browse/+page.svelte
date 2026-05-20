@@ -6,8 +6,14 @@
   let { data }: { data: PageData } = $props();
 
   type Show = 'all' | 'owned' | 'unowned' | 'loose' | 'cib' | 'new';
+  // No commercial GameCube / N64 / Game Boy game shipped this year or later,
+  // so a catalog entry dated >= this is homebrew/fan-made with near-total
+  // confidence. Games with no known year are never hidden.
+  const HOMEBREW_YEAR = 2010;
+
   let filter = $state('');
   let show = $state<Show>('all');
+  let hideHomebrew = $state(true);
 
   // Client-side filtering — the console's full game list is already loaded,
   // so this is instant with no round-trip.
@@ -15,6 +21,10 @@
     data.games.filter((game) => {
       const q = filter.trim().toLowerCase();
       if (q && !game.title.toLowerCase().includes(q)) return false;
+
+      if (hideHomebrew && game.releaseYear !== null && game.releaseYear >= HOMEBREW_YEAR) {
+        return false;
+      }
 
       const owned = game.ownedConditions.length > 0;
       if (show === 'owned') return owned;
@@ -50,6 +60,10 @@
           <option value="new">Owned — New</option>
           <option value="unowned">Not owned</option>
         </select>
+      </label>
+      <label class="check">
+        <input type="checkbox" bind:checked={hideHomebrew} />
+        Hide likely homebrew ({HOMEBREW_YEAR}+)
       </label>
       <span class="match-count">{visibleGames.length} of {data.games.length}</span>
     </div>
@@ -103,6 +117,8 @@
     background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
     border-radius: var(--radius); padding: var(--space-2); font: inherit;
   }
+  .filters .check { cursor: pointer; }
+  .filters input[type='checkbox'] { accent-color: var(--accent); cursor: pointer; }
   .match-count { color: var(--text-dim); font-size: var(--fs-sm); font-family: var(--mono); }
   .row {
     display: grid; grid-template-columns: 1fr 90px 90px 90px;
