@@ -21,6 +21,7 @@ export interface CollectionRow {
   gameId: number;
   title: string;
   console: string;
+  boxartUrl: string | null;
   condition: string;
   grade: string | null;
   notes: string | null;
@@ -54,6 +55,7 @@ export function listCollection(db: DB): CollectionRow[] {
       gameId: collectionItems.gameId,
       title: games.title,
       console: games.console,
+      boxartUrl: games.boxartUrl,
       condition: collectionItems.condition,
       grade: collectionItems.grade,
       notes: collectionItems.notes,

@@ -3,6 +3,7 @@
   import { CONDITIONS, CONDITION_LABELS } from '$lib/types';
   import ConsoleSidebar from '$lib/components/ConsoleSidebar.svelte';
   import ConditionButton from '$lib/components/ConditionButton.svelte';
+  import GameThumb from '$lib/components/GameThumb.svelte';
   import { CONSOLE_RELEASE_YEAR } from '$lib/sources/platforms';
   let { data }: { data: PageData } = $props();
 
@@ -93,13 +94,7 @@
 
     {#each visibleGames as game (game.id)}
       <div class="row">
-        <span class="art">
-          {#if game.boxartUrl}
-            <img src={game.boxartUrl} alt="" loading="lazy" />
-          {:else}
-            <span class="noart" aria-hidden="true"></span>
-          {/if}
-        </span>
+        <GameThumb url={game.boxartUrl} />
         <span class="title">{game.title}
           {#if game.releaseYear}<em>({game.releaseYear})</em>{/if}</span>
         {#each CONDITIONS as c}
@@ -151,15 +146,6 @@
     padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
   }
   .row.header { color: var(--text-dim); font-size: var(--fs-sm); text-transform: uppercase; }
-  .art { display: flex; align-items: center; justify-content: center; }
-  .art img {
-    width: 36px; height: auto; max-height: 50px;
-    border-radius: 2px; display: block;
-  }
-  .noart {
-    width: 36px; height: 36px; border-radius: 2px;
-    background: var(--surface-2); border: 1px solid var(--border);
-  }
   .cond { text-align: right; font-family: var(--mono); }
   .title em { color: var(--text-dim); font-style: italic; }
   .empty { color: var(--text-dim); margin-top: var(--space-4); }

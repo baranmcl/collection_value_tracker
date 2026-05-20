@@ -11,7 +11,8 @@ export const load: PageServerLoad = async () => {
     const est = estimates.get(`${r.gameId}:${r.condition}`) ?? null;
     const value = resolveItemValue(r, est);
     return {
-      id: r.id, gameId: r.gameId, title: r.title, console: r.console, condition: r.condition,
+      id: r.id, gameId: r.gameId, title: r.title, console: r.console, boxartUrl: r.boxartUrl,
+      condition: r.condition,
       grade: r.grade, notes: r.notes, acquiredAt: r.acquiredAt, manualPrice: r.manualPrice,
       value,
       valueSource: r.manualPrice !== null ? 'manual' : est !== null ? 'estimate' : 'unknown'

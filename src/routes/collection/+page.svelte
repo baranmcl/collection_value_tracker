@@ -4,6 +4,7 @@
   import { CONDITION_LABELS } from '$lib/types';
   import type { Condition } from '$lib/types';
   import ItemEditor from '$lib/components/ItemEditor.svelte';
+  import GameThumb from '$lib/components/GameThumb.svelte';
 
   let { data }: { data: PageData } = $props();
 
@@ -42,12 +43,13 @@
 </div>
 
 <div class="row header">
-  <span>Title</span><span>Console</span><span>Condition</span><span>Grade</span>
+  <span></span><span>Title</span><span>Console</span><span>Condition</span><span>Grade</span>
   <span class="num">Value</span><span></span>
 </div>
 
 {#each visible as item (item.id)}
   <div class="row">
+    <GameThumb url={item.boxartUrl} />
     <span class="title">{item.title}
       {#if item.notes}<em>— {item.notes}</em>{/if}</span>
     <span>{item.console}</span>
@@ -78,7 +80,7 @@
     border-radius: var(--radius); padding: var(--space-2);
   }
   .row {
-    display: grid; grid-template-columns: 2fr 1fr 1fr 1fr 1.2fr 40px;
+    display: grid; grid-template-columns: 44px 2fr 1fr 1fr 1fr 1.2fr 40px;
     gap: var(--space-2); align-items: center;
     padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
   }

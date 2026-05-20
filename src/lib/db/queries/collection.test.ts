@@ -68,4 +68,14 @@ describe('collection queries', () => {
     expect(listCollection(db)[0].title).toBe('GoldenEye 007');
     expect(listCollection(db)[0].console).toBe('N64');
   });
+
+  it('listCollection carries the game boxart url', () => {
+    const db = makeTestDb();
+    upsertGames(db, [
+      { id: 1, console: 'SNES', title: 'X', region: null, releaseYear: null,
+        boxartUrl: 'https://cdn/x.jpg' }
+    ]);
+    addItem(db, { gameId: 1, condition: 'loose' });
+    expect(listCollection(db)[0].boxartUrl).toBe('https://cdn/x.jpg');
+  });
 });

@@ -4,10 +4,13 @@ import Page from './+page.svelte';
 
 const data = {
   items: [
-    { id: 1, gameId: 1, title: 'Chrono Trigger', console: 'SNES', condition: 'loose',
-      grade: 'mint', notes: 'boxed', acquiredAt: null, manualPrice: null, value: 4200, valueSource: 'estimate' },
-    { id: 2, gameId: 2, title: 'GoldenEye', console: 'N64', condition: 'cib',
-      grade: null, notes: null, acquiredAt: null, manualPrice: 9000, value: 9000, valueSource: 'manual' }
+    { id: 1, gameId: 1, title: 'Chrono Trigger', console: 'SNES',
+      boxartUrl: 'https://cdn.thegamesdb.net/images/thumb/boxart/front/1-1.jpg',
+      condition: 'loose', grade: 'mint', notes: 'boxed', acquiredAt: null, manualPrice: null,
+      value: 4200, valueSource: 'estimate' },
+    { id: 2, gameId: 2, title: 'GoldenEye', console: 'N64', boxartUrl: null,
+      condition: 'cib', grade: null, notes: null, acquiredAt: null, manualPrice: 9000,
+      value: 9000, valueSource: 'manual' }
   ],
   totalValue: 13200,
   averageValue: 6600
@@ -28,5 +31,10 @@ describe('collection page', () => {
   it('marks a manually-priced value distinctly from an estimate', () => {
     const { getByTestId } = render(Page, { props: { data } });
     expect(getByTestId('value-source-2').textContent).toMatch(/manual/i);
+  });
+  it('renders a box-art thumbnail for items that have one', () => {
+    const { container } = render(Page, { props: { data } });
+    const imgs = [...container.querySelectorAll('img')];
+    expect(imgs.some((i) => i.getAttribute('src')?.includes('boxart/front/1-1.jpg'))).toBe(true);
   });
 });
