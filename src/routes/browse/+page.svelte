@@ -4,23 +4,21 @@
   import ConsoleSidebar from '$lib/components/ConsoleSidebar.svelte';
   import ConditionButton from '$lib/components/ConditionButton.svelte';
   import GameThumb from '$lib/components/GameThumb.svelte';
-  import { CONSOLE_RELEASE_YEAR } from '$lib/sources/platforms';
+  import { CONSOLE_RELEASE_YEAR, CONSOLE_END_YEAR } from '$lib/sources/platforms';
   let { data }: { data: PageData } = $props();
 
   type Show = 'all' | 'owned' | 'unowned' | 'loose' | 'cib' | 'new';
-  // "Likely homebrew" = a release year that can't belong to a commercial
-  // game: dated >= 2010 (no console here had official releases that late),
-  // or dated before the console itself launched (placeholder/epoch dates).
-  // Games with no known year are never hidden.
-  const HOMEBREW_YEAR = 2010;
 
   let filter = $state('');
   let show = $state<Show>('all');
   let hideHomebrew = $state(true);
 
-  // The selected console's launch year, if known — anything dated earlier
-  // is impossible and treated as homebrew/bad data.
+  // "Likely homebrew" = a release year that can't belong to a commercial
+  // game for this console: before it launched (placeholder/epoch dates), or
+  // after its commercial life ended. A console still in production has no
+  // end year, so only the lower bound applies. Unknown years are never hidden.
   let consoleStart = $derived(CONSOLE_RELEASE_YEAR[data.selectedConsole] ?? null);
+  let consoleEnd = $derived(CONSOLE_END_YEAR[data.selectedConsole] ?? null);
 
   // Strip diacritics so a search for "pokemon" also matches "Pokémon".
   // Official Pokémon titles use an accented "é"; without folding, a plain
@@ -36,9 +34,9 @@
         if (q && !fold(game.title).includes(q)) return false;
 
         if (hideHomebrew && game.releaseYear !== null) {
-          // Too modern to be commercial, or older than the console itself.
-          if (game.releaseYear >= HOMEBREW_YEAR) return false;
+          // Older than the console, or after its commercial life ended.
           if (consoleStart !== null && game.releaseYear < consoleStart) return false;
+          if (consoleEnd !== null && game.releaseYear > consoleEnd) return false;
         }
 
         const owned = game.ownedConditions.length > 0;

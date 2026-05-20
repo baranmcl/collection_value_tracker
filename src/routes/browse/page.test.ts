@@ -4,20 +4,20 @@ import Page from './+page.svelte';
 
 const data = {
   consoles: [
-    { console: 'SNES', count: 2 },
+    { console: 'Game Boy', count: 3 },
     { console: 'N64', count: 1 }
   ],
-  selectedConsole: 'SNES',
+  selectedConsole: 'Game Boy',
   search: '',
   games: [
-    { id: 1, title: 'Chrono Trigger', console: 'SNES', region: 'NTSC', releaseYear: 1995,
+    { id: 1, title: 'Chrono Trigger', console: 'Game Boy', region: 'NTSC', releaseYear: 1995,
       boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
-    { id: 2, title: 'Super Metroid', console: 'SNES', region: 'NTSC', releaseYear: 1994,
+    { id: 2, title: 'Super Metroid', console: 'Game Boy', region: 'NTSC', releaseYear: 1994,
       boxartUrl: 'https://cdn.thegamesdb.net/images/thumb/boxart/front/2-1.jpg',
       ownedConditions: ['loose'], estimates: { loose: 4200, cib: null, new: null } },
-    { id: 3, title: 'Homebrew Quest', console: 'SNES', region: null, releaseYear: 2023,
+    { id: 3, title: 'Homebrew Quest', console: 'Game Boy', region: null, releaseYear: 2023,
       boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
-    { id: 4, title: 'Pokémon Ruby Version', console: 'SNES', region: 'NTSC', releaseYear: 2003,
+    { id: 4, title: 'Pokémon Ruby Version', console: 'Game Boy', region: 'NTSC', releaseYear: 2003,
       boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
   ]
 };
@@ -25,8 +25,8 @@ const data = {
 describe('browse page', () => {
   it('lists consoles with counts and the games for the selected console', () => {
     const { getAllByText, getByText } = render(Page, { props: { data } });
-    // 'SNES' appears in both the sidebar link and the page h1
-    expect(getAllByText('SNES').length).toBeGreaterThan(0);
+    // 'Game Boy' appears in both the sidebar link and the page h1
+    expect(getAllByText('Game Boy').length).toBeGreaterThan(0);
     expect(getByText('Chrono Trigger')).toBeInTheDocument();
     expect(getByText('Super Metroid')).toBeInTheDocument();
   });
@@ -61,8 +61,9 @@ describe('browse page', () => {
     expect(queryByText('Super Metroid')).toBeInTheDocument();
     expect(queryByText('Chrono Trigger')).not.toBeInTheDocument();
   });
-  it('hides post-2010 homebrew by default and reveals it when toggled off', async () => {
+  it('hides games released after the console era by default and reveals them when toggled off', async () => {
     const { queryByText, getByLabelText } = render(Page, { props: { data } });
+    // Game Boy's commercial era ended ~2009 — the 2023 entry is hidden.
     expect(queryByText('Homebrew Quest')).not.toBeInTheDocument();
     expect(queryByText('Chrono Trigger')).toBeInTheDocument();
     await fireEvent.click(getByLabelText(/homebrew/i));
@@ -86,5 +87,19 @@ describe('browse page', () => {
     expect(queryByText('Epoch Junk Hack')).not.toBeInTheDocument();
     await fireEvent.click(getByLabelText(/homebrew/i));
     expect(queryByText('Epoch Junk Hack')).toBeInTheDocument();
+  });
+  it('keeps current-era games for a console still in production', () => {
+    const switchData = {
+      consoles: [{ console: 'Switch', count: 1 }],
+      selectedConsole: 'Switch',
+      search: '',
+      games: [
+        { id: 20, title: 'Recent Switch Game', console: 'Switch', region: 'NTSC', releaseYear: 2024,
+          boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
+      ]
+    };
+    // Switch has no end year, so a 2024 game is NOT treated as homebrew.
+    const { queryByText } = render(Page, { props: { data: switchData } });
+    expect(queryByText('Recent Switch Game')).toBeInTheDocument();
   });
 });

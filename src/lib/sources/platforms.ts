@@ -10,7 +10,9 @@ export const PLATFORMS: Platform[] = [
   { thegamesdbId: 3, name: 'N64' },
   { thegamesdbId: 4, name: 'Game Boy' },
   { thegamesdbId: 41, name: 'Game Boy Color' },
-  { thegamesdbId: 5, name: 'Game Boy Advance' }
+  { thegamesdbId: 5, name: 'Game Boy Advance' },
+  { thegamesdbId: 9, name: 'Wii' },
+  { thegamesdbId: 4971, name: 'Switch' }
 ];
 
 const BY_RAW_NAME: Record<string, string> = {
@@ -33,5 +35,20 @@ export const CONSOLE_RELEASE_YEAR: Record<string, number> = {
   N64: 1996,
   'Game Boy': 1989,
   'Game Boy Color': 1998,
-  'Game Boy Advance': 2001
+  'Game Boy Advance': 2001,
+  Wii: 2006,
+  Switch: 2017
+};
+
+/** The last year each console received commercial releases. A catalog
+ *  entry dated after this is homebrew/fan-made. A console still in
+ *  production (Switch) is intentionally absent — its current-era games
+ *  cannot be told apart from homebrew by release year. */
+export const CONSOLE_END_YEAR: Record<string, number> = {
+  GameCube: 2009,
+  N64: 2009,
+  'Game Boy': 2009,
+  'Game Boy Color': 2009,
+  'Game Boy Advance': 2009,
+  Wii: 2014
 };
