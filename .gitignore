@@ -1,0 +1,14 @@
+# Brainstorm session content (mockups, state)
+.superpowers/
+
+# Your collection database and any downloaded price CSVs.
+# These contain personal data and/or third-party data we shouldn't redistribute.
+data/
+
+# Node / SvelteKit (added now so future scaffolding is covered)
+node_modules/
+.svelte-kit/
+build/
+.env
+.env.*
+!.env.example
