@@ -55,12 +55,19 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Not started.
+**Overall:** 9/9 phases shipped on branch `feat/collection-value-tracker` (not yet merged). Final whole-implementation review passed; 4 fixes applied in `870cbb0`. Full suite 96 tests passing, `npm run check` clean, `npm run build` succeeds.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Project foundation | ⬜ Not started | — | — |
-| 2 — Database query layer | ⬜ Not started | — | — |
+| 1 — Project foundation | ✅ Shipped | `c797ab3`..`0d4a749` | test 9/9, check clean, build OK |
+| 2 — Database query layer | ✅ Shipped | `6df8526`..`eff9e7e` | 28/28 tests, check clean |
+| 3 — TheGamesDB catalog sync | ✅ Shipped | `e4dae1c`..`700c474` | 37 tests, check clean |
+| 4 — eBay price estimation | ✅ Shipped | `bf2bbae`..`4cdf241` | 58 tests, check clean |
+| 5 — Server routes | ✅ Shipped | `5adb5e9`..`e6f7eac` | 70 tests, check clean |
+| 6 — App shell & Settings | ✅ Shipped | `a86d844`..`2ad6331` | 74 tests, check clean, dev render OK |
+| 7 — Browse screen | ✅ Shipped | `3fc678a`..`f36057a` | 85 tests, check clean |
+| 8 — Collection screen | ✅ Shipped | `b0a3713` | 88 tests, check clean |
+| 9 — Dashboard screen | ✅ Shipped | `e43743f`..`46491ab` | 95 tests, check clean, build OK |
 | 3 — TheGamesDB catalog sync | ⬜ Not started | — | — |
 | 4 — eBay price estimation | ⬜ Not started | — | — |
 | 5 — Server routes | ⬜ Not started | — | — |
@@ -68,6 +75,47 @@ notes and commit messages.
 | 7 — Browse screen | ⬜ Not started | — | — |
 | 8 — Collection screen | ⬜ Not started | — | — |
 | 9 — Dashboard screen | ⬜ Not started | — | — |
+
+### Discoveries
+
+- **D1 (Task 1.5):** the planned `parseDollars` stripped `-` along with all
+  other non-numeric characters, so `parseDollars('-5')` returned `500`
+  instead of `null` and the negative-input test would have failed. Fixed
+  by rejecting input with a leading `-` before the strip. Code block in
+  Task 1.5 corrected; shipped in commit `a0b36c2`.
+- **D2 (Task 4.2):** the planned `client.test.ts` destructured `f.mock.calls[0]`,
+  which Vitest types as an empty tuple for a zero-arg mock — `svelte-check`
+  flagged it. Fixed by casting the destructured call to the expected
+  `[string, { headers: Record<string,string> }]` shape. Shipped in `fb1769c`.
+- **D3 (Task 6.1):** `@fontsource/*` packages have no types for the bare
+  side-effect import; `svelte-check` errored. Fixed with a module
+  declaration `src/lib/styles/fonts.d.ts`. Shipped in `a86d844`.
+- **D4 (Task 6.1):** the jest-dom custom matchers (`toBeInTheDocument`,
+  `toHaveClass`) needed their types registered for `svelte-check`. Added
+  `"types": ["@testing-library/jest-dom"]` to `tsconfig.json`. Shipped in
+  `a86d844`.
+- **D5 (Task 6.2):** the planned settings test `getByText(/eBay/i)` matched
+  two elements (the credentials line and the footnote) and threw. The
+  footnote wording was changed to remove the second "eBay" mention.
+  Shipped in `2ad6331`.
+- **D6 (Phase 7, UI test mechanics):** three small plan-test imprecisions
+  fixed during execution — `getByText('SNES')` matched both the sidebar and
+  the `<h1>` (switched to `getAllByText`); the browse test `data` object
+  needed a `search: ''` field to satisfy `PageData`; and `$state(prop)`
+  initializers triggered Svelte 5's `state_referenced_locally` warning, fixed
+  by wrapping with `untrack(() => ...)`. Shipped across `3fc678a`..`f36057a`.
+- **D7 (final review):** the whole-implementation review found 3 user-facing
+  issues, all fixed in `870cbb0`: (1) the Browse `{#each}` was unkeyed so
+  `ConditionButton` ownership state went stale on console switch — keyed by
+  `game.id`; (2) the dashboard "since last refresh" delta routed through a
+  misleading `previousTotal` — replaced with a direct `refreshDelta` and an
+  honest "from re-priced games" label; (3) `syncCatalog` could loop forever
+  on a non-terminating `pages.next` — added an empty-page break and a
+  1000-page cap; plus (4) an invalid manual price silently cleared the
+  override — now throws. Remaining minor review notes (a stranded refresh
+  event row on fatal failure, a wasteful re-estimate on "add another copy",
+  the `source` timestamp format, unused `NewGame` export) were judged not
+  worth churn for v1 and left as-is.
 
 ---
 
@@ -91,7 +139,7 @@ notes and commit messages.
 
 ## Phase 1 — Project foundation
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `c797ab3`..`0d4a749` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: a SvelteKit app that builds, has a working SQLite + Drizzle layer with the five-table schema, a passing test harness, and shared money/type utilities.
 
@@ -521,6 +569,9 @@ export function formatCents(cents: number | null): string {
 
 /** Parse a user-typed dollar amount to integer cents. Invalid/negative → null. */
 export function parseDollars(input: string): number | null {
+  // Reject negatives BEFORE stripping non-numeric chars — the strip would
+  // otherwise turn '-5' into '5'. (Discovery D1.)
+  if (input.trim().startsWith('-')) return null;
   const cleaned = input.replace(/[^0-9.]/g, '');
   if (cleaned === '') return null;
   const dollars = Number(cleaned);
@@ -622,7 +673,7 @@ git commit -m "feat: add env credential config and .env.example"
 
 ## Phase 2 — Database query layer
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `6df8526`..`eff9e7e` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: every database read/write the app needs, as pure functions taking a `DB` argument. All tested against `makeTestDb()`. No file touches SQLite outside `src/lib/db/`.
 
@@ -1243,7 +1294,7 @@ git commit -m "feat: add snapshot, refresh-event, and top-mover queries"
 
 ## Phase 3 — TheGamesDB catalog sync
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `e4dae1c`..`700c474` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: pull the game list per platform from TheGamesDB and UPSERT into `games`.
 
@@ -1580,7 +1631,7 @@ git commit -m "feat: add TheGamesDB catalog sync with progress and error toleran
 
 ## Phase 4 — eBay price estimation
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `bf2bbae`..`4cdf241` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: an OAuth-authenticated eBay Browse client, a condition-aware query builder, a robust median estimator, and a refresh routine that re-estimates owned games and writes snapshots.
 
@@ -2160,7 +2211,7 @@ git commit -m "feat: add eBay estimate-pair and refresh routine with snapshots"
 
 ## Phase 5 — Server routes
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `5adb5e9`..`e6f7eac` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: SvelteKit server endpoints and page `load` functions wiring the query layer and sources to HTTP. These use the real `db` singleton from `client.ts` and credentials from `$env/dynamic/private`.
 
@@ -2711,7 +2762,7 @@ git commit -m "feat: add dashboard data aggregation"
 
 ## Phase 6 — App shell & Settings screen
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `a86d844`..`2ad6331` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: a designed, distinctive app shell with navigation and design tokens, plus the Settings screen for catalog sync, price refresh, and credential status.
 
@@ -3068,7 +3119,7 @@ git commit -m "feat: add Settings screen with sync, refresh, and credential stat
 
 ## Phase 7 — Browse screen
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `3fc678a`..`f36057a` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: the browse-and-check entry screen — console sidebar, title search, a game list with three condition controls per row, add/remove with a pending state while the estimate is fetched, and a detail editor.
 
@@ -3734,7 +3785,7 @@ git commit -m "feat: add by-pair removal endpoint and item detail editor"
 
 ## Phase 8 — Collection screen
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `b0a3713` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: a sortable, filterable table of owned items with per-row editing via `ItemEditor`.
 
@@ -3941,7 +3992,7 @@ git commit -m "feat: add Collection screen with sortable, filterable item table"
 
 ## Phase 9 — Dashboard screen
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `e43743f`..`46491ab` on 2026-05-20 (branch `feat/collection-value-tracker`)
 
 Goal: the portfolio dashboard — stat tiles, a console value-breakdown bar, and a top-movers panel.
 
