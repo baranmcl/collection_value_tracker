@@ -1,0 +1,18 @@
+:root {
+  --bg: #0f1419;
+  --surface: #1a2129;
+  --surface-2: #232d38;
+  --border: #2f3a47;
+  --text: #e6e9ed;
+  --text-dim: #93a1b0;
+  --accent: #3dd9d6;        /* actions */
+  --accent-warm: #f0a830;   /* value figures */
+  --positive: #4caf78;
+  --negative: #e0644b;
+  --space-1: 4px; --space-2: 8px; --space-3: 16px;
+  --space-4: 24px; --space-5: 40px;
+  --radius: 6px;
+  --font: 'Inter', system-ui, -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, monospace;
+  --fs-sm: 13px; --fs-base: 15px; --fs-lg: 20px; --fs-xl: 32px;
+}

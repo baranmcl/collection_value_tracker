@@ -30,6 +30,8 @@
 		"vitest": "^4.1.6"
 	},
 	"dependencies": {
+		"@fontsource/inter": "^5.2.8",
+		"@fontsource/jetbrains-mono": "^5.2.8",
 		"better-sqlite3": "^12.10.0",
 		"drizzle-orm": "^0.45.2"
 	}

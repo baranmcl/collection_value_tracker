@@ -1,11 +1,18 @@
 <script lang="ts">
-	import favicon from '$lib/assets/favicon.svg';
-
-	let { children } = $props();
+  import '@fontsource/inter';
+  import '@fontsource/jetbrains-mono';
+  import '../app.css';
+  import { page } from '$app/state';
+  import Nav from '$lib/components/Nav.svelte';
+  let { children } = $props();
 </script>
 
-<svelte:head>
-	<link rel="icon" href={favicon} />
-</svelte:head>
+<div class="app">
+  <Nav pathname={page.url.pathname} />
+  <main>{@render children()}</main>
+</div>
 
-{@render children()}
+<style>
+  .app { min-height: 100%; }
+  main { padding: var(--space-4); max-width: 1100px; margin: 0 auto; }
+</style>
