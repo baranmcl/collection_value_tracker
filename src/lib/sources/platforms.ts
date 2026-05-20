@@ -6,14 +6,11 @@ export interface Platform {
 }
 
 export const PLATFORMS: Platform[] = [
-  { thegamesdbId: 6, name: 'SNES' },
-  { thegamesdbId: 7, name: 'NES' },
+  { thegamesdbId: 2, name: 'GameCube' },
   { thegamesdbId: 3, name: 'N64' },
   { thegamesdbId: 4, name: 'Game Boy' },
-  { thegamesdbId: 5, name: 'Game Boy Advance' },
-  { thegamesdbId: 18, name: 'Sega Genesis' },
-  { thegamesdbId: 10, name: 'PlayStation' },
-  { thegamesdbId: 11, name: 'PlayStation 2' }
+  { thegamesdbId: 41, name: 'Game Boy Color' },
+  { thegamesdbId: 5, name: 'Game Boy Advance' }
 ];
 
 const BY_RAW_NAME: Record<string, string> = {

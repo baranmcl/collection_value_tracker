@@ -1,9 +1,38 @@
 <script lang="ts">
+  import { untrack } from 'svelte';
   import type { PageData } from './$types';
   let { data }: { data: PageData } = $props();
   let syncing = $state(false);
   let refreshing = $state(false);
   let message = $state('');
+
+  // Consoles to sync — all selected by default. `untrack` snapshots the
+  // initial platform list; the set is user-controlled from here on.
+  const selected = $state(untrack(() => new Set(data.platforms.map((p) => p.thegamesdbId))));
+
+  function toggle(id: number) {
+    if (selected.has(id)) selected.delete(id);
+    else selected.add(id);
+  }
+
+  async function syncCatalog() {
+    syncing = true;
+    message = '';
+    try {
+      const res = await fetch('/api/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ platformIds: [...selected] })
+      });
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.message ?? 'failed');
+      location.reload();
+    } catch (e) {
+      message = e instanceof Error ? e.message : 'error';
+    } finally {
+      syncing = false;
+    }
+  }
 
   async function run(url: string, setBusy: (b: boolean) => void) {
     setBusy(true);
@@ -28,9 +57,25 @@
   <h2>Catalog</h2>
   <p><strong>{data.gameCount}</strong> games loaded.
     {#if data.lastSyncedAt}Last synced {data.lastSyncedAt.toLocaleString()}.{/if}</p>
-  <button onclick={() => run('/api/sync', (b) => (syncing = b))} disabled={syncing}>
+
+  <fieldset class="consoles">
+    <legend>Consoles to sync</legend>
+    {#each data.platforms as p}
+      <label>
+        <input
+          type="checkbox"
+          checked={selected.has(p.thegamesdbId)}
+          onchange={() => toggle(p.thegamesdbId)}
+        />
+        {p.name}
+      </label>
+    {/each}
+  </fieldset>
+
+  <button onclick={syncCatalog} disabled={syncing || selected.size === 0}>
     {syncing ? 'Syncing…' : 'Sync catalog'}
   </button>
+  {#if selected.size === 0}<span class="hint">Pick at least one console.</span>{/if}
 </section>
 
 <section class="card">
@@ -79,11 +124,20 @@
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius); padding: var(--space-4); margin-bottom: var(--space-3);
   }
+  .consoles {
+    margin-top: var(--space-3); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: var(--space-2) var(--space-3);
+    display: flex; flex-wrap: wrap; gap: var(--space-3);
+  }
+  .consoles legend { color: var(--text-dim); font-size: var(--fs-sm); padding: 0 var(--space-1); }
+  .consoles label { display: flex; align-items: center; gap: var(--space-1); font-size: var(--fs-sm); }
+  .consoles input { accent-color: var(--accent); }
   button {
     margin-top: var(--space-3); background: var(--accent); color: var(--bg);
     border: none; border-radius: var(--radius); padding: var(--space-2) var(--space-3); font-weight: 600;
   }
   button:disabled { opacity: 0.5; cursor: default; }
+  .hint { margin-left: var(--space-2); font-size: var(--fs-sm); color: var(--text-dim); }
   .ok { color: var(--positive); }
   .bad { color: var(--negative); }
   .dim { color: var(--text-dim); }

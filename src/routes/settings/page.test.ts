@@ -8,7 +8,11 @@ const data = {
   ownedItemCount: 12,
   lastRefreshAt: null,
   credentials: { thegamesdb: true, ebay: false },
-  refreshHistory: []
+  refreshHistory: [],
+  platforms: [
+    { thegamesdbId: 2, name: 'GameCube' },
+    { thegamesdbId: 3, name: 'N64' }
+  ]
 };
 
 describe('settings page', () => {
@@ -21,5 +25,12 @@ describe('settings page', () => {
     const { getByRole } = render(Page, { props: { data } });
     expect(getByRole('button', { name: /sync catalog/i })).toBeInTheDocument();
     expect(getByRole('button', { name: /refresh estimates/i })).toBeInTheDocument();
+  });
+  it('lists each console as a checkbox, checked by default', () => {
+    const { getByRole } = render(Page, { props: { data } });
+    const gamecube = getByRole('checkbox', { name: 'GameCube' });
+    expect(gamecube).toBeInTheDocument();
+    expect(gamecube).toBeChecked();
+    expect(getByRole('checkbox', { name: 'N64' })).toBeChecked();
   });
 });
