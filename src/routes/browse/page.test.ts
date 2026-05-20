@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/svelte';
+import { render, fireEvent } from '@testing-library/svelte';
 import Page from './+page.svelte';
 
 const data = {
@@ -28,5 +28,19 @@ describe('browse page', () => {
   it('shows the estimate on an owned condition control', () => {
     const { getByText } = render(Page, { props: { data } });
     expect(getByText('$42.00')).toBeInTheDocument();
+  });
+  it('filters the game list by title text', async () => {
+    const { getByPlaceholderText, queryByText } = render(Page, { props: { data } });
+    await fireEvent.input(getByPlaceholderText(/filter by title/i), {
+      target: { value: 'metroid' }
+    });
+    expect(queryByText('Super Metroid')).toBeInTheDocument();
+    expect(queryByText('Chrono Trigger')).not.toBeInTheDocument();
+  });
+  it('filters to owned games only', async () => {
+    const { getByLabelText, queryByText } = render(Page, { props: { data } });
+    await fireEvent.change(getByLabelText('Show'), { target: { value: 'owned' } });
+    expect(queryByText('Super Metroid')).toBeInTheDocument();
+    expect(queryByText('Chrono Trigger')).not.toBeInTheDocument();
   });
 });
