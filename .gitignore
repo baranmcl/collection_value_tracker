@@ -12,3 +12,7 @@ build/
 .env
 .env.*
 !.env.example
+.gstack/
+
+# Git worktrees — see docs/git-strategy.md
+.claude/worktrees/
