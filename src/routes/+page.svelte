@@ -5,7 +5,7 @@
   import MoversPanel from '$lib/components/MoversPanel.svelte';
 
   let { data }: { data: PageData } = $props();
-  let delta = $derived(data.totalValue - data.previousTotal);
+  let delta = $derived(data.refreshDelta);
 </script>
 
 <h1>Dashboard</h1>
@@ -16,7 +16,7 @@
     <span class="figure">{formatCents(data.totalValue)}</span>
     {#if delta !== 0}
       <span class="delta" class:up={delta > 0} class:down={delta < 0}>
-        {delta > 0 ? '+' : '−'}{formatCents(Math.abs(delta))} since last refresh
+        {delta > 0 ? '+' : '−'}{formatCents(Math.abs(delta))} from re-priced games
       </span>
     {/if}
   </div>

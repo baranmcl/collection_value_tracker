@@ -33,4 +33,10 @@ describe('applyItemUpdate', () => {
     const id = addItem(db, { gameId: 1, condition: 'loose' });
     expect(() => applyItemUpdate(db, id, { condition: 'bad' })).toThrow(/condition/i);
   });
+
+  it('rejects an invalid manual price instead of silently clearing it', () => {
+    const db = seed();
+    const id = addItem(db, { gameId: 1, condition: 'loose' });
+    expect(() => applyItemUpdate(db, id, { manualPriceInput: 'abc' })).toThrow(/price/i);
+  });
 });

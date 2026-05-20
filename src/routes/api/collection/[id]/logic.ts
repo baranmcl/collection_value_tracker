@@ -21,7 +21,14 @@ export function applyItemUpdate(db: DB, id: number, req: ItemUpdateRequest): voi
   if (req.notes !== undefined) patch.notes = req.notes;
   if (req.acquiredAt !== undefined) patch.acquiredAt = req.acquiredAt;
   if (req.manualPriceInput !== undefined) {
-    patch.manualPrice = req.manualPriceInput.trim() === '' ? null : parseDollars(req.manualPriceInput);
+    const trimmed = req.manualPriceInput.trim();
+    if (trimmed === '') {
+      patch.manualPrice = null;
+    } else {
+      const cents = parseDollars(trimmed);
+      if (cents === null) throw new Error(`Invalid price: ${req.manualPriceInput}`);
+      patch.manualPrice = cents;
+    }
   }
   updateItem(db, id, patch);
 }

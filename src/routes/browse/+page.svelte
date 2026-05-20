@@ -15,7 +15,7 @@
       <span>Title</span>
       {#each CONDITIONS as c}<span class="cond">{CONDITION_LABELS[c]}</span>{/each}
     </div>
-    {#each data.games as game}
+    {#each data.games as game (game.id)}
       <div class="row">
         <span class="title">{game.title}
           {#if game.releaseYear}<em>({game.releaseYear})</em>{/if}</span>

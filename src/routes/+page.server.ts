@@ -5,7 +5,7 @@ import { topMovers } from '$lib/db/queries/refresh';
 
 export const load: PageServerLoad = async () => {
   const data = dashboardData(db);
-  // previousTotal = current total minus the sum of mover deltas
-  const moverDeltaSum = topMovers(db, 1000).reduce((s, m) => s + m.delta, 0);
-  return { ...data, previousTotal: data.totalValue - moverDeltaSum };
+  // Net dollar change across games re-priced by the most recent refresh.
+  const refreshDelta = topMovers(db, 1000).reduce((s, m) => s + m.delta, 0);
+  return { ...data, refreshDelta };
 };

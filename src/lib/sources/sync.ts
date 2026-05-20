@@ -28,11 +28,14 @@ export async function syncCatalog(db: DB, opts: SyncOptions): Promise<SyncResult
     const platform = opts.platforms[i];
     try {
       let page: number | null = 1;
-      while (page !== null) {
+      const MAX_PAGES = 1000;
+      while (page !== null && page <= MAX_PAGES) {
         const result = await opts.fetchPage(platform.thegamesdbId, platform.name, page);
         upsertGames(db, result.games);
         gamesLoaded += result.games.length;
-        page = result.nextPage;
+        // Stop on an empty page even if the API still reports a next page —
+        // guards against a non-terminating `pages.next`.
+        page = result.games.length === 0 ? null : result.nextPage;
       }
       platformsCovered++;
     } catch {

@@ -5,7 +5,7 @@ import Page from './+page.svelte';
 const data = {
   totalValue: 13000, itemCount: 2, unvaluedCount: 0,
   byConsole: [{ console: 'SNES', value: 13000 }],
-  movers: [], lastRefreshAt: null, previousTotal: 11000
+  movers: [], lastRefreshAt: null, refreshDelta: 2000
 };
 
 describe('dashboard', () => {
