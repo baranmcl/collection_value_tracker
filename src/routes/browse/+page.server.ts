@@ -23,6 +23,7 @@ export const load: PageServerLoad = async ({ url }) => {
     console: g.console,
     region: g.region,
     releaseYear: g.releaseYear,
+    boxartUrl: g.boxartUrl,
     ownedConditions: owned.get(g.id) ?? [],
     estimates: Object.fromEntries(
       CONDITIONS.map((c) => [c, estimates.get(`${g.id}:${c}`) ?? null])

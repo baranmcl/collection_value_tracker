@@ -86,12 +86,20 @@
     </div>
 
     <div class="row header">
+      <span></span>
       <span>Title</span>
       {#each CONDITIONS as c}<span class="cond">{CONDITION_LABELS[c]}</span>{/each}
     </div>
 
     {#each visibleGames as game (game.id)}
       <div class="row">
+        <span class="art">
+          {#if game.boxartUrl}
+            <img src={game.boxartUrl} alt="" loading="lazy" />
+          {:else}
+            <span class="noart" aria-hidden="true"></span>
+          {/if}
+        </span>
         <span class="title">{game.title}
           {#if game.releaseYear}<em>({game.releaseYear})</em>{/if}</span>
         {#each CONDITIONS as c}
@@ -138,11 +146,20 @@
   .filters input[type='checkbox'] { accent-color: var(--accent); cursor: pointer; }
   .match-count { color: var(--text-dim); font-size: var(--fs-sm); font-family: var(--mono); }
   .row {
-    display: grid; grid-template-columns: 1fr 90px 90px 90px;
+    display: grid; grid-template-columns: 44px 1fr 90px 90px 90px;
     gap: var(--space-2); align-items: center;
     padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
   }
   .row.header { color: var(--text-dim); font-size: var(--fs-sm); text-transform: uppercase; }
+  .art { display: flex; align-items: center; justify-content: center; }
+  .art img {
+    width: 36px; height: auto; max-height: 50px;
+    border-radius: 2px; display: block;
+  }
+  .noart {
+    width: 36px; height: 36px; border-radius: 2px;
+    background: var(--surface-2); border: 1px solid var(--border);
+  }
   .cond { text-align: right; font-family: var(--mono); }
   .title em { color: var(--text-dim); font-style: italic; }
   .empty { color: var(--text-dim); margin-top: var(--space-4); }

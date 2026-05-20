@@ -6,6 +6,7 @@ export const games = sqliteTable('games', {
   title: text('title').notNull(),
   region: text('region'),
   releaseYear: integer('release_year'),
+  boxartUrl: text('boxart_url'), // front cover thumbnail URL, nullable
   lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' }).notNull()
 });
 

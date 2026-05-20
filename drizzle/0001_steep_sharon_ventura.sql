@@ -1,0 +1,1 @@
+ALTER TABLE `games` ADD `boxart_url` text;

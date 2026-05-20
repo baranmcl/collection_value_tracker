@@ -11,13 +11,14 @@ const data = {
   search: '',
   games: [
     { id: 1, title: 'Chrono Trigger', console: 'SNES', region: 'NTSC', releaseYear: 1995,
-      ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
+      boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
     { id: 2, title: 'Super Metroid', console: 'SNES', region: 'NTSC', releaseYear: 1994,
+      boxartUrl: 'https://cdn.thegamesdb.net/images/thumb/boxart/front/2-1.jpg',
       ownedConditions: ['loose'], estimates: { loose: 4200, cib: null, new: null } },
     { id: 3, title: 'Homebrew Quest', console: 'SNES', region: null, releaseYear: 2023,
-      ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
+      boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
     { id: 4, title: 'Pokémon Ruby Version', console: 'SNES', region: 'NTSC', releaseYear: 2003,
-      ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
+      boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
   ]
 };
 
@@ -32,6 +33,11 @@ describe('browse page', () => {
   it('shows the estimate on an owned condition control', () => {
     const { getByText } = render(Page, { props: { data } });
     expect(getByText('$42.00')).toBeInTheDocument();
+  });
+  it('renders a box-art thumbnail for games that have one', () => {
+    const { container } = render(Page, { props: { data } });
+    const imgs = [...container.querySelectorAll('img')];
+    expect(imgs.some((i) => i.getAttribute('src')?.includes('boxart/front/2-1.jpg'))).toBe(true);
   });
   it('filters the game list by title text', async () => {
     const { getByPlaceholderText, queryByText } = render(Page, { props: { data } });
@@ -69,9 +75,9 @@ describe('browse page', () => {
       search: '',
       games: [
         { id: 10, title: 'Tetris', console: 'Game Boy', region: 'NTSC', releaseYear: 1989,
-          ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
+          boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
         { id: 11, title: 'Epoch Junk Hack', console: 'Game Boy', region: null, releaseYear: 1970,
-          ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
+          boxartUrl: null, ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
       ]
     };
     const { queryByText, getByLabelText } = render(Page, { props: { data: gbData } });

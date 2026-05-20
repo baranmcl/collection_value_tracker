@@ -8,6 +8,7 @@ export interface CatalogGame {
   title: string;
   region: string | null;
   releaseYear: number | null;
+  boxartUrl?: string | null; // front cover thumbnail URL, if TheGamesDB has one
 }
 
 /** Insert or update catalog games, keyed on TheGamesDB id. */
@@ -16,11 +17,19 @@ export function upsertGames(db: DB, rows: CatalogGame[]): void {
   const now = new Date();
   db.transaction((tx) => {
     for (const r of rows) {
+      const boxartUrl = r.boxartUrl ?? null;
       tx.insert(games)
-        .values({ ...r, lastSyncedAt: now })
+        .values({ ...r, boxartUrl, lastSyncedAt: now })
         .onConflictDoUpdate({
           target: games.id,
-          set: { console: r.console, title: r.title, region: r.region, releaseYear: r.releaseYear, lastSyncedAt: now }
+          set: {
+            console: r.console,
+            title: r.title,
+            region: r.region,
+            releaseYear: r.releaseYear,
+            boxartUrl,
+            lastSyncedAt: now
+          }
         })
         .run();
     }
