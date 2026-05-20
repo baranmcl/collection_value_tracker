@@ -36,7 +36,7 @@ export async function fetchPlatformGames(
   page: number,
   fetchFn: typeof fetch = fetch
 ): Promise<PlatformPage> {
-  const url = `${BASE}/v1.1/Games/ByPlatformID?apikey=${apiKey}&id=${platformId}&page=${page}`;
+  const url = `${BASE}/v1/Games/ByPlatformID?apikey=${apiKey}&id=${platformId}&page=${page}`;
   const res = await fetchFn(url);
   if (!res.ok) throw new Error(`TheGamesDB ${res.status} for platform ${platformId} page ${page}`);
   const body = (await res.json()) as {

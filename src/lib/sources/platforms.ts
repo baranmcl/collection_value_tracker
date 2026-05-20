@@ -11,9 +11,9 @@ export const PLATFORMS: Platform[] = [
   { thegamesdbId: 3, name: 'N64' },
   { thegamesdbId: 4, name: 'Game Boy' },
   { thegamesdbId: 5, name: 'Game Boy Advance' },
-  { thegamesdbId: 10, name: 'Sega Genesis' },
-  { thegamesdbId: 11, name: 'PlayStation' },
-  { thegamesdbId: 12, name: 'PlayStation 2' }
+  { thegamesdbId: 18, name: 'Sega Genesis' },
+  { thegamesdbId: 10, name: 'PlayStation' },
+  { thegamesdbId: 11, name: 'PlayStation 2' }
 ];
 
 const BY_RAW_NAME: Record<string, string> = {
