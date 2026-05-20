@@ -1,8 +1,8 @@
 <script lang="ts">
   import type { PageData } from './$types';
-  import { formatCents } from '$lib/money';
   import { CONDITIONS, CONDITION_LABELS } from '$lib/types';
   import ConsoleSidebar from '$lib/components/ConsoleSidebar.svelte';
+  import ConditionButton from '$lib/components/ConditionButton.svelte';
   let { data }: { data: PageData } = $props();
 </script>
 
@@ -20,7 +20,14 @@
         <span class="title">{game.title}
           {#if game.releaseYear}<em>({game.releaseYear})</em>{/if}</span>
         {#each CONDITIONS as c}
-          <span class="cond">{formatCents(game.estimates[c])}</span>
+          <span class="cond">
+            <ConditionButton
+              gameId={game.id}
+              condition={c}
+              owned={game.ownedConditions.includes(c)}
+              estimate={game.estimates[c]}
+            />
+          </span>
         {/each}
       </div>
     {/each}
