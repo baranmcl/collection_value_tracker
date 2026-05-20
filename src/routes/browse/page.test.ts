@@ -15,6 +15,8 @@ const data = {
     { id: 2, title: 'Super Metroid', console: 'SNES', region: 'NTSC', releaseYear: 1994,
       ownedConditions: ['loose'], estimates: { loose: 4200, cib: null, new: null } },
     { id: 3, title: 'Homebrew Quest', console: 'SNES', region: null, releaseYear: 2023,
+      ownedConditions: [], estimates: { loose: null, cib: null, new: null } },
+    { id: 4, title: 'Pokémon Ruby Version', console: 'SNES', region: 'NTSC', releaseYear: 2003,
       ownedConditions: [], estimates: { loose: null, cib: null, new: null } }
   ]
 };
@@ -39,6 +41,14 @@ describe('browse page', () => {
     expect(queryByText('Super Metroid')).toBeInTheDocument();
     expect(queryByText('Chrono Trigger')).not.toBeInTheDocument();
   });
+  it('matches accented titles when the search omits the accent', async () => {
+    const { getByPlaceholderText, queryByText } = render(Page, { props: { data } });
+    await fireEvent.input(getByPlaceholderText(/filter by title/i), {
+      target: { value: 'pokemon ruby' }
+    });
+    // "Pokémon Ruby Version" (accented é) must match a plain-ASCII search.
+    expect(queryByText('Pokémon Ruby Version')).toBeInTheDocument();
+  });
   it('filters to owned games only', async () => {
     const { getByLabelText, queryByText } = render(Page, { props: { data } });
     await fireEvent.change(getByLabelText('Show'), { target: { value: 'owned' } });
@@ -47,10 +57,8 @@ describe('browse page', () => {
   });
   it('hides post-2010 homebrew by default and reveals it when toggled off', async () => {
     const { queryByText, getByLabelText } = render(Page, { props: { data } });
-    // Default: the 2023 entry is hidden, the commercial-era games are not.
     expect(queryByText('Homebrew Quest')).not.toBeInTheDocument();
     expect(queryByText('Chrono Trigger')).toBeInTheDocument();
-    // Unchecking the filter reveals it.
     await fireEvent.click(getByLabelText(/homebrew/i));
     expect(queryByText('Homebrew Quest')).toBeInTheDocument();
   });

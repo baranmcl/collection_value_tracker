@@ -15,25 +15,34 @@
   let show = $state<Show>('all');
   let hideHomebrew = $state(true);
 
+  // Strip diacritics so a search for "pokemon" also matches "Pokémon".
+  // Official Pokémon titles use an accented "é"; without folding, a plain
+  // ASCII search would silently miss every one of them.
+  const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
   // Client-side filtering — the console's full game list is already loaded,
   // so this is instant with no round-trip.
   let visibleGames = $derived(
-    data.games.filter((game) => {
-      const q = filter.trim().toLowerCase();
-      if (q && !game.title.toLowerCase().includes(q)) return false;
+    data.games
+      .filter((game) => {
+        const q = fold(filter.trim());
+        if (q && !fold(game.title).includes(q)) return false;
 
-      if (hideHomebrew && game.releaseYear !== null && game.releaseYear >= HOMEBREW_YEAR) {
-        return false;
-      }
+        if (hideHomebrew && game.releaseYear !== null && game.releaseYear >= HOMEBREW_YEAR) {
+          return false;
+        }
 
-      const owned = game.ownedConditions.length > 0;
-      if (show === 'owned') return owned;
-      if (show === 'unowned') return !owned;
-      if (show === 'loose' || show === 'cib' || show === 'new') {
-        return game.ownedConditions.includes(show);
-      }
-      return true; // 'all'
-    })
+        const owned = game.ownedConditions.length > 0;
+        if (show === 'owned') return owned;
+        if (show === 'unowned') return !owned;
+        if (show === 'loose' || show === 'cib' || show === 'new') {
+          return game.ownedConditions.includes(show);
+        }
+        return true; // 'all'
+      })
+      // Accent-aware sort: "Pokémon Ruby" lands next to "Pokemon Rubino"
+      // instead of after the entire rest of the alphabet.
+      .toSorted((a, b) => a.title.localeCompare(b.title))
   );
 </script>
 
