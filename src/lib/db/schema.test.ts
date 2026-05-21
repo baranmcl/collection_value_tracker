@@ -35,4 +35,16 @@ describe('schema', () => {
     const rows = db.select().from(refreshEvents).all();
     expect(rows.map((r) => r.errorSummary)).toContain('rate_limit×1 (aborted)');
   });
+
+  it('stores a nullable total value on a refresh event', () => {
+    const db = makeTestDb();
+    db.insert(refreshEvents).values({ triggeredAt: new Date(), source: 'ebay_browse' }).run();
+    expect(db.select().from(refreshEvents).get()?.totalValue).toBeNull();
+
+    db.insert(refreshEvents)
+      .values({ triggeredAt: new Date(), source: 'ebay_browse', totalValue: 508611 })
+      .run();
+    const rows = db.select().from(refreshEvents).all();
+    expect(rows.map((r) => r.totalValue)).toContain(508611);
+  });
 });

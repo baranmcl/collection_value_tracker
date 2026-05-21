@@ -1,0 +1,1 @@
+ALTER TABLE `refresh_events` ADD `total_value` integer;

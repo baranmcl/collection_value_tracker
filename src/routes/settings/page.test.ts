@@ -43,7 +43,8 @@ describe('settings page', () => {
           source: 'ebay_browse',
           itemsUpdated: 5,
           errors: 2,
-          errorSummary: 'rate_limit×1; other×1 (aborted)'
+          errorSummary: 'rate_limit×1; other×1 (aborted)',
+          totalValue: null
         }
       ]
     };
@@ -60,7 +61,8 @@ describe('settings page', () => {
           source: 'ebay_browse',
           itemsUpdated: 8,
           errors: 0,
-          errorSummary: null
+          errorSummary: null,
+          totalValue: null
         }
       ]
     };
