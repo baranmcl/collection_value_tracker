@@ -1,5 +1,3 @@
-<!-- ABOUTME: Progress bar component for a running price-estimate refresh. -->
-<!-- ABOUTME: Displays the current game name and done/total count with a fill bar. -->
 <script lang="ts">
   import type { RefreshProgress } from '$lib/sources/refresh';
 

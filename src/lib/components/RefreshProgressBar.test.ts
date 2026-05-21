@@ -1,5 +1,3 @@
-// ABOUTME: Tests for the RefreshProgressBar component — verifies label text and
-// ABOUTME: bar fill width for various progress states.
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
 import RefreshProgressBar from './RefreshProgressBar.svelte';

@@ -79,6 +79,12 @@
           }
         }
       }
+      buf += decoder.decode(); // flush the decoder; catch a final line lacking a trailing newline
+      const tail = buf.trim();
+      if (tail.length > 0) {
+        const event = JSON.parse(tail);
+        if (event.type === 'result') result = event;
+      }
       refreshProgress = null;
       if (!result) throw new Error('refresh ended without a result');
       // Clean run: reload so counts and history update. Failed/aborted run:
