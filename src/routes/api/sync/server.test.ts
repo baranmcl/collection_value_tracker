@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { makeTestDb } from '$lib/db/test-db';
-import { listGamesByConsole } from '$lib/db/queries/games';
+import { browseGames } from '$lib/db/queries/games';
 import { runSync } from './logic';
 
 describe('runSync', () => {
@@ -16,7 +16,7 @@ describe('runSync', () => {
       fetchPage
     });
     expect(result.gamesLoaded).toBe(1);
-    expect(listGamesByConsole(db, 'SNES')).toHaveLength(1);
+    expect(browseGames(db, { console: 'SNES', query: '', show: 'all', homebrewBounds: null }, 1, 100).totalCount).toBe(1);
   });
 
   it('throws a clear error when the API key is missing', async () => {

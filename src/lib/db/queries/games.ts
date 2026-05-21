@@ -1,4 +1,5 @@
 import { and, asc, eq, gte, inArray, isNull, like, lte, notInArray, or, sql, type SQL } from 'drizzle-orm';
+
 import { fold } from '$lib/fold';
 import type { DB } from '../client';
 import { collectionItems, games, type Game } from '../schema';
@@ -41,19 +42,6 @@ export function upsertGames(db: DB, rows: CatalogGame[]): void {
 
 export function getGame(db: DB, id: number) {
   return db.select().from(games).where(eq(games.id, id)).get();
-}
-
-export function listGamesByConsole(db: DB, console: string) {
-  return db.select().from(games).where(eq(games.console, console)).orderBy(asc(games.title)).all();
-}
-
-export function searchGames(db: DB, console: string, query: string) {
-  return db
-    .select()
-    .from(games)
-    .where(and(eq(games.console, console), like(games.title, `%${query}%`)))
-    .orderBy(asc(games.title))
-    .all();
 }
 
 export function consoleCounts(db: DB): { console: string; count: number }[] {

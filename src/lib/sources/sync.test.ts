@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { makeTestDb } from '$lib/db/test-db';
-import { listGamesByConsole } from '$lib/db/queries/games';
+import { browseGames } from '$lib/db/queries/games';
 import { syncCatalog } from './sync';
 
 describe('syncCatalog', () => {
@@ -17,7 +17,7 @@ describe('syncCatalog', () => {
       onProgress: (done) => progress.push(done)
     });
     expect(result.gamesLoaded).toBe(2);
-    expect(listGamesByConsole(db, 'SNES')).toHaveLength(2);
+    expect(browseGames(db, { console: 'SNES', query: '', show: 'all', homebrewBounds: null }, 1, 100).totalCount).toBe(2);
     expect(progress.at(-1)).toBe(1); // 1 of 1 platforms done
   });
 

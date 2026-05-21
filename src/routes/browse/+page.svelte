@@ -1,56 +1,70 @@
 <script lang="ts">
   import type { PageData } from './$types';
+  import { goto } from '$app/navigation';
   import { CONDITIONS, CONDITION_LABELS } from '$lib/types';
+  import { untrack } from 'svelte';
   import ConsoleSidebar from '$lib/components/ConsoleSidebar.svelte';
   import ConditionButton from '$lib/components/ConditionButton.svelte';
   import GameThumb from '$lib/components/GameThumb.svelte';
-  import { CONSOLE_RELEASE_YEAR, CONSOLE_END_YEAR } from '$lib/sources/platforms';
+
   let { data }: { data: PageData } = $props();
 
-  type Show = 'all' | 'owned' | 'unowned' | 'loose' | 'cib' | 'new';
+  // untrack suppresses the "only captures initial value" warning — the $effect
+  // below handles reactive re-sync whenever data.query changes from outside.
+  let searchValue = $state(untrack(() => data.query));
+  // Re-sync the box when the URL's query changes from outside (e.g. switching
+  // console clears it). Reads data.query, not searchValue, so live typing
+  // (which only changes searchValue) does not trigger or fight this.
+  $effect(() => {
+    searchValue = data.query;
+  });
 
-  let filter = $state('');
-  let show = $state<Show>('all');
-  let hideHomebrew = $state(true);
+  let debounceTimer: ReturnType<typeof setTimeout>;
 
-  // "Likely homebrew" = a release year that can't belong to a commercial
-  // game for this console: before it launched (placeholder/epoch dates), or
-  // after its commercial life ended. A console still in production has no
-  // end year, so only the lower bound applies. Unknown years are never hidden.
-  let consoleStart = $derived(CONSOLE_RELEASE_YEAR[data.selectedConsole] ?? null);
-  let consoleEnd = $derived(CONSOLE_END_YEAR[data.selectedConsole] ?? null);
+  /** Build a /browse URL from the current filters, applying overrides.
+   *  A null override removes that param. */
+  function browseUrl(overrides: Record<string, string | null>): string {
+    const params = new URLSearchParams();
+    params.set('console', data.selectedConsole);
+    if (data.query) params.set('q', data.query);
+    if (data.show !== 'all') params.set('show', data.show);
+    if (!data.hideHomebrew) params.set('homebrew', 'show');
+    if (data.page > 1) params.set('page', String(data.page));
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v === null) params.delete(k);
+      else params.set(k, v);
+    }
+    return `/browse?${params}`;
+  }
 
-  // Strip diacritics so a search for "pokemon" also matches "Pokémon".
-  // Official Pokémon titles use an accented "é"; without folding, a plain
-  // ASCII search would silently miss every one of them.
-  const fold = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  function onSearchInput(e: Event) {
+    // Read the value off the event so the debounce does not depend on the
+    // bind:value signal having flushed.
+    const v = (e.currentTarget as HTMLInputElement).value;
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      goto(browseUrl({ q: v.trim() || null, page: null }), {
+        replaceState: true,
+        keepFocus: true,
+        noScroll: true
+      });
+    }, 250);
+  }
 
-  // Client-side filtering — the console's full game list is already loaded,
-  // so this is instant with no round-trip.
-  let visibleGames = $derived(
-    data.games
-      .filter((game) => {
-        const q = fold(filter.trim());
-        if (q && !fold(game.title).includes(q)) return false;
+  function onShowChange(e: Event) {
+    const v = (e.currentTarget as HTMLSelectElement).value;
+    goto(browseUrl({ show: v === 'all' ? null : v, page: null }));
+  }
 
-        if (hideHomebrew && game.releaseYear !== null) {
-          // Older than the console, or after its commercial life ended.
-          if (consoleStart !== null && game.releaseYear < consoleStart) return false;
-          if (consoleEnd !== null && game.releaseYear > consoleEnd) return false;
-        }
+  function onHomebrewChange(e: Event) {
+    const checked = (e.currentTarget as HTMLInputElement).checked;
+    goto(browseUrl({ homebrew: checked ? null : 'show', page: null }));
+  }
 
-        const owned = game.ownedConditions.length > 0;
-        if (show === 'owned') return owned;
-        if (show === 'unowned') return !owned;
-        if (show === 'loose' || show === 'cib' || show === 'new') {
-          return game.ownedConditions.includes(show);
-        }
-        return true; // 'all'
-      })
-      // Accent-aware sort: "Pokémon Ruby" lands next to "Pokemon Rubino"
-      // instead of after the entire rest of the alphabet.
-      .toSorted((a, b) => a.title.localeCompare(b.title))
-  );
+  let firstRow = $derived(data.totalCount === 0 ? 0 : (data.page - 1) * data.pageSize + 1);
+  let lastRow = $derived(Math.min(data.page * data.pageSize, data.totalCount));
+  let hasPrev = $derived(data.page > 1);
+  let hasNext = $derived(data.page * data.pageSize < data.totalCount);
 </script>
 
 <div class="browse">
@@ -64,11 +78,12 @@
         class="search"
         type="search"
         placeholder="Filter by title…"
-        bind:value={filter}
+        bind:value={searchValue}
+        oninput={onSearchInput}
       />
       <label>
         Show
-        <select bind:value={show}>
+        <select value={data.show} onchange={onShowChange}>
           <option value="all">All games</option>
           <option value="owned">Owned — any</option>
           <option value="loose">Owned — Loose</option>
@@ -78,10 +93,9 @@
         </select>
       </label>
       <label class="check">
-        <input type="checkbox" bind:checked={hideHomebrew} />
+        <input type="checkbox" checked={data.hideHomebrew} onchange={onHomebrewChange} />
         Hide likely homebrew
       </label>
-      <span class="match-count">{visibleGames.length} of {data.games.length}</span>
     </div>
 
     <div class="row header">
@@ -90,7 +104,7 @@
       {#each CONDITIONS as c}<span class="cond">{CONDITION_LABELS[c]}</span>{/each}
     </div>
 
-    {#each visibleGames as game (game.id)}
+    {#each data.games as game (game.id)}
       <div class="row">
         <GameThumb url={game.boxartUrl} />
         <span class="title">{game.title}
@@ -108,9 +122,17 @@
       </div>
     {/each}
 
-    {#if visibleGames.length === 0}
+    {#if data.games.length === 0}
       <p class="empty">No games match the current filters.</p>
     {/if}
+
+    <div class="pager">
+      <span class="count">
+        {#if data.totalCount === 0}No games{:else}Showing {firstRow}–{lastRow} of {data.totalCount}{/if}
+      </span>
+      <button onclick={() => goto(browseUrl({ page: String(data.page - 1) }))} disabled={!hasPrev}>Prev</button>
+      <button onclick={() => goto(browseUrl({ page: String(data.page + 1) }))} disabled={!hasNext}>Next</button>
+    </div>
   </div>
 </div>
 
@@ -137,7 +159,6 @@
   }
   .filters .check { cursor: pointer; }
   .filters input[type='checkbox'] { accent-color: var(--accent); cursor: pointer; }
-  .match-count { color: var(--text-dim); font-size: var(--fs-sm); font-family: var(--mono); }
   .row {
     display: grid; grid-template-columns: 44px 1fr 90px 90px 90px;
     gap: var(--space-2); align-items: center;
@@ -147,4 +168,14 @@
   .cond { text-align: right; font-family: var(--mono); }
   .title em { color: var(--text-dim); font-style: italic; }
   .empty { color: var(--text-dim); margin-top: var(--space-4); }
+  .pager {
+    display: flex; align-items: center; gap: var(--space-3);
+    margin-top: var(--space-3); color: var(--text-dim); font-size: var(--fs-sm);
+  }
+  .pager .count { font-family: var(--mono); margin-right: auto; }
+  .pager button {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: var(--radius); padding: var(--space-1) var(--space-3); font: inherit;
+  }
+  .pager button:disabled { opacity: 0.4; cursor: default; }
 </style>
