@@ -33,4 +33,21 @@ describe('settings page', () => {
     expect(gamecube).toBeChecked();
     expect(getByRole('checkbox', { name: 'N64' })).toBeChecked();
   });
+  it('shows the error summary on a refresh history row', () => {
+    const withHistory = {
+      ...data,
+      refreshHistory: [
+        {
+          id: 1,
+          triggeredAt: new Date('2026-05-20T10:00:00Z'),
+          source: 'ebay_browse',
+          itemsUpdated: 5,
+          errors: 2,
+          errorSummary: 'rate_limit×1; other×1 (aborted)'
+        }
+      ]
+    };
+    const { getByText } = render(Page, { props: { data: withHistory } });
+    expect(getByText(/rate_limit×1; other×1 \(aborted\)/)).toBeInTheDocument();
+  });
 });

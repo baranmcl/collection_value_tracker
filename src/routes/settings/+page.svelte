@@ -1,6 +1,7 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import type { PageData } from './$types';
+  import type { RefreshResult } from '$lib/sources/refresh';
   let { data }: { data: PageData } = $props();
   let syncing = $state(false);
   let refreshing = $state(false);
@@ -34,19 +35,35 @@
     }
   }
 
-  async function run(url: string, setBusy: (b: boolean) => void) {
-    setBusy(true);
+  function refreshMessage(r: RefreshResult): string {
+    if (r.aborted) {
+      const reason = r.errorsByReason.auth > 0 ? 'an authentication error' : 'a rate limit';
+      return `Refresh aborted after ${reason} — ${r.itemsUpdated} estimate(s) changed before stopping.`;
+    }
+    if (r.errors > 0) {
+      return `Refresh complete — ${r.itemsUpdated} changed, ${r.errors} failed.`;
+    }
+    return `Refresh complete — ${r.itemsUpdated} estimate(s) changed.`;
+  }
+
+  async function runRefresh() {
+    refreshing = true;
     message = '';
     try {
-      const res = await fetch(url, { method: 'POST' });
+      const res = await fetch('/api/refresh', { method: 'POST' });
       const body = await res.json();
       if (!res.ok) throw new Error(body.message ?? 'failed');
-      message = JSON.stringify(body);
-      location.reload();
+      // Clean run: reload so counts and history update. Failed/aborted run:
+      // stay on the page and show the categorized message.
+      if (body.aborted || body.errors > 0) {
+        message = refreshMessage(body);
+      } else {
+        location.reload();
+      }
     } catch (e) {
       message = e instanceof Error ? e.message : 'error';
     } finally {
-      setBusy(false);
+      refreshing = false;
     }
   }
 </script>
@@ -82,7 +99,7 @@
   <h2>Prices</h2>
   <p>{data.ownedItemCount} owned items.
     {#if data.lastRefreshAt}Last refreshed {data.lastRefreshAt.toLocaleString()}.{/if}</p>
-  <button onclick={() => run('/api/refresh', (b) => (refreshing = b))} disabled={refreshing}>
+  <button onclick={runRefresh} disabled={refreshing}>
     {refreshing ? 'Refreshing…' : 'Refresh estimates'}
   </button>
 </section>
@@ -104,7 +121,9 @@
   {:else}
     <ul>
       {#each data.refreshHistory as e}
-        <li>{e.triggeredAt.toLocaleString()} — {e.itemsUpdated} updated, {e.errors} errors</li>
+        <li>
+          {e.triggeredAt.toLocaleString()} — {e.itemsUpdated} updated, {e.errors} errors{#if e.errorSummary} — {e.errorSummary}{/if}
+        </li>
       {/each}
     </ul>
   {/if}
