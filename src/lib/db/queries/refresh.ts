@@ -22,6 +22,7 @@ export interface RefreshEventUpdate {
   itemsUpdated: number;
   errors: number;
   errorSummary: string | null;
+  totalValue: number;
 }
 
 /** Write the final tallies onto a refresh event when a run finishes. */

@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { makeTestDb } from '$lib/db/test-db';
 import { upsertGames } from '$lib/db/queries/games';
 import { addItem, updateItem } from '$lib/db/queries/collection';
-import { getEstimate } from '$lib/db/queries/prices';
+import { collectionTotalCents, getEstimate } from '$lib/db/queries/prices';
 import { estimatePair, refreshEstimates, type RefreshProgress } from './refresh';
 import { EbayError } from './ebay/errors';
 import { latestRefreshEvent } from '$lib/db/queries/refresh';
@@ -170,5 +170,14 @@ describe('refreshEstimates', () => {
       onProgress: () => {}
     });
     expect(latestRefreshEvent(failDb)?.errorSummary).toBe('rate_limit×1 (aborted)');
+  });
+
+  it('records the collection total on the refresh event', async () => {
+    const db = seed();
+    addItem(db, { gameId: 1, condition: 'loose' });
+    const search = vi.fn(async (q: string) => [{ priceCents: 4200, title: q, conditionId: 3000 }]);
+    await refreshEstimates(db, { search, onProgress: () => {} });
+    expect(latestRefreshEvent(db)?.totalValue).toBe(collectionTotalCents(db));
+    expect(latestRefreshEvent(db)?.totalValue).toBe(4200);
   });
 });

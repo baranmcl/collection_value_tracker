@@ -4,7 +4,7 @@ import { asc, eq, isNull } from 'drizzle-orm';
 import type { DB } from '$lib/db/client';
 import { collectionItems, games } from '$lib/db/schema';
 import { getGame } from '$lib/db/queries/games';
-import { getEstimate, upsertEstimate } from '$lib/db/queries/prices';
+import { collectionTotalCents, getEstimate, upsertEstimate } from '$lib/db/queries/prices';
 import { createRefreshEvent, insertSnapshot, updateRefreshEvent } from '$lib/db/queries/refresh';
 import { classifyError, type ErrorReason } from './ebay/errors';
 import { estimateFromListings } from './ebay/estimate';
@@ -139,6 +139,11 @@ export async function refreshEstimates(db: DB, opts: RefreshOptions): Promise<Re
   );
 
   const errors = errorsByReason.auth + errorsByReason.rate_limit + errorsByReason.other;
-  updateRefreshEvent(db, eventId, { itemsUpdated, errors, errorSummary: summarizeErrors(errorsByReason, aborted) });
+  updateRefreshEvent(db, eventId, {
+    itemsUpdated,
+    errors,
+    errorSummary: summarizeErrors(errorsByReason, aborted),
+    totalValue: collectionTotalCents(db)
+  });
   return { itemsUpdated, errors, errorsByReason, aborted, refreshEventId: eventId };
 }
