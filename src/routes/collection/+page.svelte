@@ -2,6 +2,7 @@
   import type { PageData } from './$types';
   import { formatCents } from '$lib/money';
   import { CONDITION_LABELS, CONDITIONS, GRADES } from '$lib/types';
+  import { isLowConfidence } from '$lib/estimate-quality';
   import type { Condition, Grade } from '$lib/types';
   import ItemEditor from '$lib/components/ItemEditor.svelte';
   import GameThumb from '$lib/components/GameThumb.svelte';
@@ -103,6 +104,12 @@
     <span class="num val">
       {formatCents(item.value)}
       <small data-testid={`value-source-${item.id}`} class="src">{item.valueSource}</small>
+      {#if item.estimateAge}
+        <small class="age" class:stale={item.estimateStale}>est. {item.estimateAge}</small>
+      {/if}
+      {#if item.listingCount !== null && isLowConfidence(item.listingCount)}
+        <small class="lowconf">⚠ {item.listingCount} {item.listingCount === 1 ? 'listing' : 'listings'}</small>
+      {/if}
     </span>
     <button class="menu" onclick={() => (editingId = editingId === item.id ? null : item.id)}>⋯</button>
   </div>
@@ -140,6 +147,9 @@
   .num { text-align: right; font-family: var(--mono); }
   .val { color: var(--accent-warm); }
   .src { display: block; font-size: 10px; color: var(--text-dim); text-transform: uppercase; }
+  .age { display: block; font-size: 10px; color: var(--text-dim); }
+  .age.stale { color: var(--accent-warm); }
+  .lowconf { display: block; font-size: 10px; color: var(--accent-warm); }
   .badge {
     justify-self: start; background: var(--surface-2); border: 1px solid var(--border);
     border-radius: var(--radius); padding: 1px var(--space-2); font-size: var(--fs-sm);

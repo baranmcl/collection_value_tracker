@@ -8,10 +8,10 @@ const data = {
     { id: 1, gameId: 1, title: 'Chrono Trigger', console: 'SNES',
       boxartUrl: 'https://cdn.thegamesdb.net/images/thumb/boxart/front/1-1.jpg',
       condition: 'loose', grade: 'mint', notes: 'boxed', acquiredAt: null, manualPrice: null,
-      value: 4200, valueSource: 'estimate' },
+      value: 4200, valueSource: 'estimate' as const, estimateAge: '3d ago', estimateStale: false, listingCount: 5 },
     { id: 2, gameId: 2, title: 'GoldenEye', console: 'N64', boxartUrl: null,
       condition: 'cib', grade: null, notes: null, acquiredAt: null, manualPrice: 9000,
-      value: 9000, valueSource: 'manual' }
+      value: 9000, valueSource: 'manual' as const, estimateAge: null, estimateStale: false, listingCount: null }
   ],
   totalValue: 13200,
   averageValue: 6600
@@ -38,19 +38,43 @@ describe('collection page', () => {
     const imgs = [...container.querySelectorAll('img')];
     expect(imgs.some((i) => i.getAttribute('src')?.includes('boxart/front/1-1.jpg'))).toBe(true);
   });
+  it('shows the relative age of an estimate-sourced value', () => {
+    const { getByText } = render(Page, { props: { data } });
+    expect(getByText('est. 3d ago')).toBeInTheDocument();
+  });
+  it('renders an age line only for estimate-sourced items', () => {
+    // data has one estimate item (id 1) and one manual item (id 2)
+    const { container } = render(Page, { props: { data } });
+    expect(container.querySelectorAll('.age').length).toBe(1);
+  });
+  it('marks a stale estimate with the stale class', () => {
+    const staleData = { ...data, items: [{ ...data.items[0], estimateStale: true }] };
+    const { container } = render(Page, { props: { data: staleData } });
+    expect(container.querySelector('.age.stale')).not.toBeNull();
+  });
+  it('flags a low-confidence estimate with its listing count', () => {
+    const thinData = { ...data, items: [{ ...data.items[0], listingCount: 1 }] };
+    const { getByText } = render(Page, { props: { data: thinData } });
+    expect(getByText(/⚠ 1 listing/)).toBeInTheDocument();
+  });
+  it('shows no low-confidence marker when the estimate has enough listings', () => {
+    // data item 1 has listingCount 5 — above the floor of 3
+    const { container } = render(Page, { props: { data } });
+    expect(container.querySelectorAll('.lowconf').length).toBe(0);
+  });
 });
 
 const sortData = {
   items: [
     { id: 1, gameId: 1, title: 'Zelda', console: 'GameCube', boxartUrl: null,
       condition: 'new', grade: 'fair', notes: null, acquiredAt: null, manualPrice: null,
-      value: 1000, valueSource: 'estimate' },
+      value: 1000, valueSource: 'estimate' as const, estimateAge: '3d ago', estimateStale: false, listingCount: 5 },
     { id: 2, gameId: 2, title: 'Mario', console: 'SNES', boxartUrl: null,
       condition: 'loose', grade: 'mint', notes: null, acquiredAt: null, manualPrice: null,
-      value: 3000, valueSource: 'estimate' },
+      value: 3000, valueSource: 'estimate' as const, estimateAge: '3d ago', estimateStale: false, listingCount: 5 },
     { id: 3, gameId: 3, title: 'Kirby', console: 'N64', boxartUrl: null,
       condition: 'cib', grade: 'good', notes: null, acquiredAt: null, manualPrice: null,
-      value: 2000, valueSource: 'estimate' }
+      value: 2000, valueSource: 'estimate' as const, estimateAge: '3d ago', estimateStale: false, listingCount: 5 }
   ],
   totalValue: 6000,
   averageValue: 2000
