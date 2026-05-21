@@ -1,3 +1,5 @@
+// ABOUTME: Server-side eBay SearchFn factories — wire the cached OAuth token
+// ABOUTME: provider and the Browse client into a SearchFn, with .env credentials.
 import { env } from '$env/dynamic/private';
 import { createTokenProvider } from '$lib/sources/ebay/auth';
 import { searchListings } from '$lib/sources/ebay/client';
