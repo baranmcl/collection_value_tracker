@@ -9,7 +9,7 @@ import { backfillFoldedTitles } from './queries/games';
 const DB_PATH = process.env.DB_PATH ?? 'data/collection.db';
 mkdirSync(dirname(DB_PATH), { recursive: true });
 
-const sqlite = new Database(DB_PATH);
+export const sqlite = new Database(DB_PATH);
 sqlite.pragma('journal_mode = WAL');
 sqlite.pragma('foreign_keys = ON');
 
