@@ -1,7 +1,7 @@
-import { and, asc, eq, isNull, like, sql } from 'drizzle-orm';
+import { and, asc, eq, gte, inArray, isNull, like, lte, notInArray, or, sql, type SQL } from 'drizzle-orm';
 import { fold } from '$lib/fold';
 import type { DB } from '../client';
-import { games } from '../schema';
+import { collectionItems, games, type Game } from '../schema';
 
 export interface CatalogGame {
   id: number;
@@ -75,4 +75,58 @@ export function backfillFoldedTitles(db: DB): void {
       tx.update(games).set({ titleFolded: fold(r.title) }).where(eq(games.id, r.id)).run();
     }
   });
+}
+
+export interface BrowseFilters {
+  console: string;
+  query: string; // already folded by the caller; '' means no text filter
+  show: 'all' | 'owned' | 'unowned' | 'loose' | 'cib' | 'new';
+  homebrewBounds: { start: number; end: number | null } | null; // null = do not hide homebrew
+}
+
+export interface BrowsePage {
+  games: Game[];
+  totalCount: number; // full filtered count, ignoring LIMIT/OFFSET
+}
+
+/** One filtered, ordered page of catalog games, plus the full match count. */
+export function browseGames(db: DB, filters: BrowseFilters, page: number, pageSize: number): BrowsePage {
+  const conds: (SQL | undefined)[] = [eq(games.console, filters.console)];
+
+  if (filters.query !== '') {
+    conds.push(like(games.titleFolded, `%${filters.query}%`));
+  }
+
+  if (filters.homebrewBounds) {
+    const { start, end } = filters.homebrewBounds;
+    const inRange =
+      end !== null ? and(gte(games.releaseYear, start), lte(games.releaseYear, end)) : gte(games.releaseYear, start);
+    conds.push(or(isNull(games.releaseYear), inRange));
+  }
+
+  const ownedIds = db.select({ id: collectionItems.gameId }).from(collectionItems);
+  if (filters.show === 'owned') {
+    conds.push(inArray(games.id, ownedIds));
+  } else if (filters.show === 'unowned') {
+    conds.push(notInArray(games.id, ownedIds));
+  } else if (filters.show === 'loose' || filters.show === 'cib' || filters.show === 'new') {
+    conds.push(
+      inArray(
+        games.id,
+        db.select({ id: collectionItems.gameId }).from(collectionItems).where(eq(collectionItems.condition, filters.show))
+      )
+    );
+  }
+
+  const where = and(...conds);
+  const rows = db
+    .select()
+    .from(games)
+    .where(where)
+    .orderBy(asc(games.titleFolded))
+    .limit(pageSize)
+    .offset((page - 1) * pageSize)
+    .all();
+  const totalCount = db.select({ c: sql<number>`count(*)` }).from(games).where(where).get()?.c ?? 0;
+  return { games: rows, totalCount };
 }
