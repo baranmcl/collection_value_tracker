@@ -14,6 +14,7 @@ async function drain(stream: ReadableStream<Uint8Array>): Promise<Record<string,
     if (done) break;
     buf += decoder.decode(value, { stream: true });
   }
+  buf += decoder.decode(); // flush any buffered partial sequence
   return buf
     .split('\n')
     .filter((l) => l.length > 0)
