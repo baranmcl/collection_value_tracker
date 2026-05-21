@@ -62,6 +62,11 @@ describe('collection page', () => {
     const { container } = render(Page, { props: { data } });
     expect(container.querySelectorAll('.lowconf').length).toBe(0);
   });
+  it('has an Export CSV link pointing at the export route', () => {
+    const { getByText } = render(Page, { props: { data } });
+    const link = getByText('Export CSV');
+    expect(link.getAttribute('href')).toBe('/api/export');
+  });
 });
 
 const sortData = {

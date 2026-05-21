@@ -81,6 +81,7 @@
       {#each consoles as c}<option value={c}>{c}</option>{/each}
     </select>
   </label>
+    <a class="export" href="/api/export" download>Export CSV</a>
 </div>
 
 <div class="row header">
@@ -130,6 +131,12 @@
   input, select {
     background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
     border-radius: var(--radius); padding: var(--space-2);
+  }
+  .export {
+    margin-left: auto; align-self: center;
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: var(--radius); padding: var(--space-2) var(--space-3);
+    font-size: var(--fs-sm); text-decoration: none;
   }
   .row {
     display: grid; grid-template-columns: 44px 2fr 1fr 1fr 1fr 1.2fr 40px;
