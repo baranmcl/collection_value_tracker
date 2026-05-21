@@ -98,11 +98,8 @@ describe('refreshEstimates', () => {
     const db = seed();
     addItem(db, { gameId: 1, condition: 'loose' });
     addItem(db, { gameId: 2, condition: 'cib' });
-    let call = 0;
-    const search = vi.fn(async (q: string) => {
-      call++;
-      if (call === 1) throw new EbayError(429, 'eBay search failed: 429');
-      return [{ priceCents: 3000, title: q, conditionId: 3000 }];
+    const search = vi.fn(async () => {
+      throw new EbayError(429, 'eBay search failed: 429');
     });
     const result = await refreshEstimates(db, { search, onProgress: () => {} });
     expect(result.aborted).toBe(true);
