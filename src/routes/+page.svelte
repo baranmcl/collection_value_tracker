@@ -3,6 +3,7 @@
   import { formatCents } from '$lib/money';
   import ConsoleBar from '$lib/components/ConsoleBar.svelte';
   import MoversPanel from '$lib/components/MoversPanel.svelte';
+  import ValueChart from '$lib/components/ValueChart.svelte';
 
   let { data }: { data: PageData } = $props();
   let delta = $derived(data.refreshDelta);
@@ -28,6 +29,11 @@
     {/if}
   </div>
 </div>
+
+<section class="card">
+  <h2>Value over time</h2>
+  <ValueChart history={data.valueHistory} />
+</section>
 
 <section class="card">
   <h2>By console</h2>

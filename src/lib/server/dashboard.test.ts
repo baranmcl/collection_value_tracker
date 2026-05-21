@@ -3,6 +3,7 @@ import { makeTestDb } from '$lib/db/test-db';
 import { upsertGames } from '$lib/db/queries/games';
 import { addItem, updateItem } from '$lib/db/queries/collection';
 import { upsertEstimate } from '$lib/db/queries/prices';
+import { refreshEvents } from '$lib/db/schema';
 import { dashboardData } from './dashboard';
 
 describe('dashboardData', () => {
@@ -42,6 +43,15 @@ describe('dashboardData', () => {
     const data = dashboardData(db);
     expect(data.totalValue).toBe(0);
     expect(data.unvaluedCount).toBe(1);
+  });
+
+  it('includes value history from recorded refresh events', () => {
+    const db = makeTestDb();
+    db.insert(refreshEvents).values([
+      { triggeredAt: new Date('2026-05-01T00:00:00Z'), source: 'x', totalValue: 3000 },
+      { triggeredAt: new Date('2026-05-10T00:00:00Z'), source: 'x', totalValue: 4000 }
+    ]).run();
+    expect(dashboardData(db).valueHistory.map((p) => p.value)).toEqual([3000, 4000]);
   });
 
   it('counts items per console even when none are priced', () => {

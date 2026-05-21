@@ -12,7 +12,8 @@ const data = {
   ],
   movers: [],
   lastRefreshAt: null,
-  refreshDelta: 2000
+  refreshDelta: 2000,
+  valueHistory: []
 };
 
 describe('dashboard', () => {
@@ -24,6 +25,10 @@ describe('dashboard', () => {
   it('shows the delta since the last refresh', () => {
     const { getByText } = render(Page, { props: { data } });
     expect(getByText(/\+\$20\.00/)).toBeInTheDocument();
+  });
+  it('renders the value-over-time card', () => {
+    const { getByText } = render(Page, { props: { data } });
+    expect(getByText('Value over time')).toBeInTheDocument();
   });
   it('breaks the collection down by console with item counts', () => {
     const { getByText } = render(Page, { props: { data } });

@@ -1,7 +1,9 @@
+// ABOUTME: Assembles the dashboard's data — total value, per-console
+// ABOUTME: breakdown, top movers, and value history.
 import type { DB } from '$lib/db/client';
 import { listCollection } from '$lib/db/queries/collection';
-import { estimateMap, resolveItemValue } from '$lib/db/queries/prices';
-import { topMovers, latestRefreshEvent, type Mover } from '$lib/db/queries/refresh';
+import { collectionTotalCents, estimateMap, resolveItemValue } from '$lib/db/queries/prices';
+import { topMovers, latestRefreshEvent, valueHistory, type Mover, type ValuePoint } from '$lib/db/queries/refresh';
 
 export interface DashboardData {
   totalValue: number;
@@ -10,13 +12,13 @@ export interface DashboardData {
   byConsole: { console: string; count: number; value: number }[];
   movers: Mover[];
   lastRefreshAt: Date | null;
+  valueHistory: ValuePoint[];
 }
 
 export function dashboardData(db: DB): DashboardData {
   const items = listCollection(db);
   const estimates = estimateMap(db);
 
-  let totalValue = 0;
   let unvaluedCount = 0;
   // Every owned item contributes to its console's count; only valued items
   // contribute to its value — so a console with no estimates still appears.
@@ -30,7 +32,6 @@ export function dashboardData(db: DB): DashboardData {
     if (value === null) {
       unvaluedCount++;
     } else {
-      totalValue += value;
       entry.value += value;
     }
     byConsoleMap.set(item.console, entry);
@@ -41,11 +42,12 @@ export function dashboardData(db: DB): DashboardData {
     .sort((a, b) => b.value - a.value || b.count - a.count);
 
   return {
-    totalValue,
+    totalValue: collectionTotalCents(db),
     itemCount: items.length,
     unvaluedCount,
     byConsole,
     movers: topMovers(db, 5),
-    lastRefreshAt: latestRefreshEvent(db)?.triggeredAt ?? null
+    lastRefreshAt: latestRefreshEvent(db)?.triggeredAt ?? null,
+    valueHistory: valueHistory(db)
   };
 }
