@@ -55,11 +55,19 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Not started.
+**Overall:** 1/1 phase shipped. On branch `feat/value-chart`, awaiting integration.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Value-Over-Time Chart | ⬜ Not started | — | Tasks 1–6 |
+| 1 — Value-Over-Time Chart | ✅ Shipped | `7831ed3`…`c471296` | Tasks 1–6, per-task + 3-round group review passed; 165 tests green |
+
+### Deviations
+
+- **Task 1:** `src/routes/settings/page.test.ts` was modified (not in the task's file list) — its `refreshHistory` fixtures are typed against `RefreshEvent`, so the new `total_value` column required `totalValue: null` added to two fixture objects. A minimal type-fix, no behavior change.
+
+### Discoveries
+
+- `src/routes/collection/+page.server.ts` has its own inline `totalValue` reducer for the collection page's average-value stat (pre-existing, out of scope for this feature). It is equivalent to `collectionTotalCents` given the same data; a future cleanup could route it through the canonical function.
 
 ---
 
@@ -86,7 +94,7 @@ Create a feature branch before Task 1 — do NOT execute on `main`. Suggested na
 
 ## Phase 1 — Value-Over-Time Chart
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `7831ed3`…`c471296` on 2026-05-21 (branch `feat/value-chart`; per-task spec + code-quality reviews and the 3-round group review all passed; 165 tests green, `npm run check` clean)
 
 ### Task 1: `total_value` column on `refresh_events`
 
