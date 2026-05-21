@@ -55,12 +55,12 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** 1/3 phases shipped to the branch; branch `feat/small-items-batch` not yet merged.
+**Overall:** 2/3 phases shipped to the branch; branch `feat/small-items-batch` not yet merged.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
 | 1 — Estimate Quality | ✅ Shipped | `f3b40ca`, `8cc365c`, `7e8b221`, `2d8a713` | Tasks 1.1–1.4; group review passed (3 rounds, 0 findings) |
-| 2 — CSV Export | ⬜ Not started | — | Tasks 2.1–2.3 |
+| 2 — CSV Export | ✅ Shipped | `724755d`, `6344ebf`, `f4bb069`, `b8e036a` | Tasks 2.1–2.3 (`b8e036a` = indentation fix); group review passed (3 rounds, 0 findings) |
 | 3 — Database Backup | ⬜ Not started | — | Tasks 3.1–3.2 |
 
 ### Deviations
@@ -602,7 +602,7 @@ When the phase ships, update the banner and the top-of-plan table per the Living
 
 ## Phase 2 — CSV Export
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED to branch `feat/small-items-batch` at `724755d`, `6344ebf`, `f4bb069`, `b8e036a` on 2026-05-21. Group review passed — 3 rounds, 0 substantive findings. Branch merge pending Phase 3.
 
 Adds a downloadable CSV of the collection. Depends on Phase 1's `enrichedCollection` (Task 1.3).
 
