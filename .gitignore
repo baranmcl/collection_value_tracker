@@ -16,3 +16,6 @@ build/
 
 # Git worktrees — see docs/git-strategy.md
 .claude/worktrees/
+
+# Local private journal (agent reflection notes)
+.private-journal/
