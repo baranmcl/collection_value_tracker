@@ -55,12 +55,12 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** 1/2 phases shipped. Executing on branch `feat/estimate-accuracy-refresh-errors`.
+**Overall:** 2/2 phases shipped. On branch `feat/estimate-accuracy-refresh-errors`, awaiting final review + integration.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
 | 1 — Estimate Accuracy | ✅ Shipped | `cade9a2`…`0a4e7f3` | Tasks 1.1–1.6, group review passed; 135 tests green |
-| 2 — Refresh Error Surfacing | ⬜ Not started | — | Tasks 2.1–2.3 |
+| 2 — Refresh Error Surfacing | ✅ Shipped | `e74a64b`…`93ccc5b` | Tasks 2.1–2.3, group review passed; 141 tests green |
 
 ### Deviations
 
@@ -965,7 +965,7 @@ When the phase ships, update this phase's **Execution Status** banner and the to
 
 ## Phase 2 — Refresh Error Surfacing
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `e74a64b`…`93ccc5b` on 2026-05-21 (branch `feat/estimate-accuracy-refresh-errors`; per-task spec + code-quality reviews and the Phase 2 group review all passed; 141 tests green, `npm run check` clean)
 
 Goal of this phase: a failed refresh tells the user *why* — live and in history — and a fatal error stops the run instead of burning quota.
 
