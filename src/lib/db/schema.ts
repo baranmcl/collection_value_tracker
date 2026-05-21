@@ -26,7 +26,8 @@ export const refreshEvents = sqliteTable('refresh_events', {
   triggeredAt: integer('triggered_at', { mode: 'timestamp' }).notNull(),
   source: text('source').notNull(),
   itemsUpdated: integer('items_updated').notNull().default(0),
-  errors: integer('errors').notNull().default(0)
+  errors: integer('errors').notNull().default(0),
+  errorSummary: text('error_summary')
 });
 
 export const priceEstimates = sqliteTable('price_estimates', {
