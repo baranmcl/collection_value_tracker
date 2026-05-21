@@ -2,7 +2,7 @@
 // ABOUTME: estimates, and resolve each owned item's value.
 import { and, eq } from 'drizzle-orm';
 import type { DB } from '../client';
-import { priceEstimates } from '../schema';
+import { priceEstimates, type PriceEstimate } from '../schema';
 import type { Condition } from '$lib/types';
 import { listCollection } from './collection';
 
@@ -42,6 +42,13 @@ export function getEstimate(db: DB, gameId: number, condition: string) {
 export function estimateMap(db: DB): Map<string, number | null> {
   const rows = db.select().from(priceEstimates).all();
   return new Map(rows.map((r) => [`${r.gameId}:${r.condition}`, r.estimate]));
+}
+
+/** Full estimate rows keyed `${gameId}:${condition}` — value plus computedAt
+ *  and listingCount, for the Collection screen's quality indicators. */
+export function estimateRecords(db: DB): Map<string, PriceEstimate> {
+  const rows = db.select().from(priceEstimates).all();
+  return new Map(rows.map((r) => [`${r.gameId}:${r.condition}`, r]));
 }
 
 /** Value of one item: manual price wins, else the estimate, else null. */

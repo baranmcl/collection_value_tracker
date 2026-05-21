@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { makeTestDb } from '../test-db';
 import { upsertGames } from './games';
 import { addItem, updateItem } from './collection';
-import { upsertEstimate, getEstimate, estimateMap, resolveItemValue, collectionTotalCents } from './prices';
+import { upsertEstimate, getEstimate, estimateMap, resolveItemValue, collectionTotalCents, estimateRecords } from './prices';
 
 function seed() {
   const db = makeTestDb();
@@ -57,5 +57,19 @@ describe('collectionTotalCents', () => {
 
   it('returns 0 for an empty collection', () => {
     expect(collectionTotalCents(makeTestDb())).toBe(0);
+  });
+});
+
+describe('estimateRecords', () => {
+  it('returns the full estimate row keyed by game:condition', () => {
+    const db = makeTestDb();
+    upsertGames(db, [{ id: 1, console: 'SNES', title: 'Chrono Trigger', region: null, releaseYear: 1995 }]);
+    upsertEstimate(db, { gameId: 1, condition: 'loose', estimate: 4200, listingCount: 5 });
+
+    const rec = estimateRecords(db).get('1:loose');
+    expect(rec?.estimate).toBe(4200);
+    expect(rec?.listingCount).toBe(5);
+    expect(rec?.computedAt).toBeInstanceOf(Date);
+    expect(estimateRecords(db).has('1:cib')).toBe(false);
   });
 });
