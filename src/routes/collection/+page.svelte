@@ -1,25 +1,66 @@
 <script lang="ts">
   import type { PageData } from './$types';
   import { formatCents } from '$lib/money';
-  import { CONDITION_LABELS } from '$lib/types';
-  import type { Condition } from '$lib/types';
+  import { CONDITION_LABELS, CONDITIONS, GRADES } from '$lib/types';
+  import type { Condition, Grade } from '$lib/types';
   import ItemEditor from '$lib/components/ItemEditor.svelte';
   import GameThumb from '$lib/components/GameThumb.svelte';
 
   let { data }: { data: PageData } = $props();
 
-  type SortKey = 'title' | 'console' | 'value';
+  type CollectionItem = PageData['items'][number];
+  type SortKey = 'title' | 'console' | 'condition' | 'grade' | 'value';
+
   let sortKey = $state<SortKey>('title');
+  let sortDir = $state<'asc' | 'desc'>('asc');
   let filter = $state('');
+  let consoleFilter = $state('');
   let editingId = $state<number | null>(null);
+
+  // Consoles present in the collection, for the filter dropdown.
+  let consoles = $derived(
+    [...new Set(data.items.map((i) => i.console))].sort((a, b) => a.localeCompare(b))
+  );
+
+  // Click a header: toggle direction if already sorting by it, else switch to
+  // it (value defaults to highest-first, the rest to A→Z / lowest-first).
+  function sortBy(key: SortKey) {
+    if (sortKey === key) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortDir = key === 'value' ? 'desc' : 'asc';
+    }
+  }
+
+  function indicator(key: SortKey): string {
+    if (sortKey !== key) return '';
+    return sortDir === 'asc' ? ' ▲' : ' ▼';
+  }
+
+  /** Ascending comparison for the active sort key. Condition and grade sort
+   *  by their domain order, not alphabetically; blank grades sort last. */
+  function compare(a: CollectionItem, b: CollectionItem): number {
+    switch (sortKey) {
+      case 'title':
+      case 'console':
+        return a[sortKey].localeCompare(b[sortKey]);
+      case 'condition':
+        return CONDITIONS.indexOf(a.condition as Condition) - CONDITIONS.indexOf(b.condition as Condition);
+      case 'grade': {
+        const rank = (g: string | null) => (g ? GRADES.indexOf(g as Grade) : GRADES.length);
+        return rank(a.grade) - rank(b.grade);
+      }
+      case 'value':
+        return (a.value ?? 0) - (b.value ?? 0);
+    }
+  }
 
   let visible = $derived(
     data.items
       .filter((i) => i.title.toLowerCase().includes(filter.toLowerCase()))
-      .toSorted((a, b) => {
-        if (sortKey === 'value') return (b.value ?? 0) - (a.value ?? 0);
-        return a[sortKey].localeCompare(b[sortKey]);
-      })
+      .filter((i) => consoleFilter === '' || i.console === consoleFilter)
+      .toSorted((a, b) => (sortDir === 'asc' ? compare(a, b) : -compare(a, b)))
   );
 </script>
 
@@ -33,18 +74,22 @@
 
 <div class="controls">
   <input placeholder="Filter by title…" bind:value={filter} />
-  <label>Sort
-    <select bind:value={sortKey}>
-      <option value="title">Title</option>
-      <option value="console">Console</option>
-      <option value="value">Value</option>
+  <label>Console
+    <select bind:value={consoleFilter}>
+      <option value="">All consoles</option>
+      {#each consoles as c}<option value={c}>{c}</option>{/each}
     </select>
   </label>
 </div>
 
 <div class="row header">
-  <span></span><span>Title</span><span>Console</span><span>Condition</span><span>Grade</span>
-  <span class="num">Value</span><span></span>
+  <span></span>
+  <button class="sort" onclick={() => sortBy('title')}>Title{indicator('title')}</button>
+  <button class="sort" onclick={() => sortBy('console')}>Console{indicator('console')}</button>
+  <button class="sort" onclick={() => sortBy('condition')}>Condition{indicator('condition')}</button>
+  <button class="sort" onclick={() => sortBy('grade')}>Grade{indicator('grade')}</button>
+  <button class="sort right" onclick={() => sortBy('value')}>Value{indicator('value')}</button>
+  <span></span>
 </div>
 
 {#each visible as item (item.id)}
@@ -85,6 +130,13 @@
     padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--border);
   }
   .row.header { color: var(--text-dim); font-size: var(--fs-sm); text-transform: uppercase; }
+  .sort {
+    background: transparent; border: none; color: inherit;
+    font: inherit; text-transform: inherit; letter-spacing: inherit;
+    padding: 0; text-align: left; cursor: pointer;
+  }
+  .sort:hover { color: var(--text); }
+  .sort.right { text-align: right; }
   .num { text-align: right; font-family: var(--mono); }
   .val { color: var(--accent-warm); }
   .src { display: block; font-size: 10px; color: var(--text-dim); text-transform: uppercase; }

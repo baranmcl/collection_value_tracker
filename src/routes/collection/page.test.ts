@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/svelte';
+import { tick } from 'svelte';
 import Page from './+page.svelte';
 
 const data = {
@@ -36,5 +37,78 @@ describe('collection page', () => {
     const { container } = render(Page, { props: { data } });
     const imgs = [...container.querySelectorAll('img')];
     expect(imgs.some((i) => i.getAttribute('src')?.includes('boxart/front/1-1.jpg'))).toBe(true);
+  });
+});
+
+const sortData = {
+  items: [
+    { id: 1, gameId: 1, title: 'Zelda', console: 'GameCube', boxartUrl: null,
+      condition: 'new', grade: 'fair', notes: null, acquiredAt: null, manualPrice: null,
+      value: 1000, valueSource: 'estimate' },
+    { id: 2, gameId: 2, title: 'Mario', console: 'SNES', boxartUrl: null,
+      condition: 'loose', grade: 'mint', notes: null, acquiredAt: null, manualPrice: null,
+      value: 3000, valueSource: 'estimate' },
+    { id: 3, gameId: 3, title: 'Kirby', console: 'N64', boxartUrl: null,
+      condition: 'cib', grade: 'good', notes: null, acquiredAt: null, manualPrice: null,
+      value: 2000, valueSource: 'estimate' }
+  ],
+  totalValue: 6000,
+  averageValue: 2000
+};
+
+const rowTitles = (c: HTMLElement) =>
+  [...c.querySelectorAll('.row:not(.header) .title')].map((el) => (el.textContent ?? '').trim());
+
+describe('collection page — sorting and filtering', () => {
+  it('sorts by title ascending by default', () => {
+    const { container } = render(Page, { props: { data: sortData } });
+    expect(rowTitles(container)).toEqual(['Kirby', 'Mario', 'Zelda']);
+  });
+
+  it('sorts by a column when its header button is clicked', async () => {
+    const { container, getByRole } = render(Page, { props: { data: sortData } });
+    getByRole('button', { name: /console/i }).click();
+    await tick();
+    expect(rowTitles(container)).toEqual(['Zelda', 'Kirby', 'Mario']); // GameCube, N64, SNES
+  });
+
+  it('reverses the sort direction when the same header is clicked twice', async () => {
+    const { container, getByRole } = render(Page, { props: { data: sortData } });
+    const header = getByRole('button', { name: /console/i });
+    header.click();
+    await tick();
+    header.click();
+    await tick();
+    expect(rowTitles(container)).toEqual(['Mario', 'Kirby', 'Zelda']); // SNES, N64, GameCube
+  });
+
+  it('sorts condition in loose→cib→new order, not alphabetically', async () => {
+    const { container, getByRole } = render(Page, { props: { data: sortData } });
+    getByRole('button', { name: /condition/i }).click();
+    await tick();
+    expect(rowTitles(container)).toEqual(['Mario', 'Kirby', 'Zelda']); // loose, cib, new
+  });
+
+  it('sorts grade in mint→poor order', async () => {
+    const { container, getByRole } = render(Page, { props: { data: sortData } });
+    getByRole('button', { name: /grade/i }).click();
+    await tick();
+    expect(rowTitles(container)).toEqual(['Mario', 'Kirby', 'Zelda']); // mint, good, fair
+  });
+
+  it('sorts value highest-first when the Value header is clicked', async () => {
+    const { container, getByRole } = render(Page, { props: { data: sortData } });
+    getByRole('button', { name: /value/i }).click();
+    await tick();
+    expect(rowTitles(container)).toEqual(['Mario', 'Kirby', 'Zelda']); // 3000, 2000, 1000
+  });
+
+  it('filters the collection by console', async () => {
+    const { container, getByLabelText } = render(Page, { props: { data: sortData } });
+    const select = getByLabelText(/console/i) as HTMLSelectElement;
+    select.value = 'N64';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    await tick();
+    expect(rowTitles(container)).toEqual(['Kirby']);
   });
 });
