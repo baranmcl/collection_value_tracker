@@ -11,6 +11,8 @@ export const PLATFORMS: Platform[] = [
   { thegamesdbId: 4, name: 'Game Boy' },
   { thegamesdbId: 41, name: 'Game Boy Color' },
   { thegamesdbId: 5, name: 'Game Boy Advance' },
+  { thegamesdbId: 8, name: 'Nintendo DS' },
+  { thegamesdbId: 4912, name: 'Nintendo 3DS' },
   { thegamesdbId: 9, name: 'Wii' },
   { thegamesdbId: 4971, name: 'Switch' }
 ];
@@ -36,6 +38,8 @@ export const CONSOLE_RELEASE_YEAR: Record<string, number> = {
   'Game Boy': 1989,
   'Game Boy Color': 1998,
   'Game Boy Advance': 2001,
+  'Nintendo DS': 2004,
+  'Nintendo 3DS': 2011,
   Wii: 2006,
   Switch: 2017
 };
@@ -50,5 +54,7 @@ export const CONSOLE_END_YEAR: Record<string, number> = {
   'Game Boy': 2009,
   'Game Boy Color': 2009,
   'Game Boy Advance': 2009,
+  'Nintendo DS': 2014,
+  'Nintendo 3DS': 2023,
   Wii: 2014
 };

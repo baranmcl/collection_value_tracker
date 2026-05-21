@@ -15,6 +15,11 @@ describe('platforms', () => {
       expect(typeof CONSOLE_RELEASE_YEAR[p.name]).toBe('number');
     }
   });
+  it('offers Nintendo DS and 3DS as syncable platforms', () => {
+    const byName = new Map(PLATFORMS.map((p) => [p.name, p.thegamesdbId]));
+    expect(byName.get('Nintendo DS')).toBe(8);
+    expect(byName.get('Nintendo 3DS')).toBe(4912);
+  });
   it('normalizes a known TheGamesDB platform name to the display name', () => {
     expect(normalizeConsoleName('Super Nintendo (SNES)')).toBe('SNES');
     expect(normalizeConsoleName('Unknown Platform')).toBe('Unknown Platform');
