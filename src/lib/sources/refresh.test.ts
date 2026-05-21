@@ -32,6 +32,19 @@ describe('estimatePair', () => {
     await estimatePair(db, { gameId: 1, condition: 'new' }, async () => []);
     expect(getEstimate(db, 1, 'new')?.estimate).toBeNull();
   });
+
+  it('drops listings that do not match the game before estimating', async () => {
+    const db = seed();
+    // game 1 is "Chrono Trigger" (see seed()). One matching listing, one junk.
+    const search = vi.fn(async (q: string) => [
+      { priceCents: 5000, title: q, conditionId: 3000 },                       // matches
+      { priceCents: 999999, title: 'Unrelated Game SNES lot', conditionId: 3000 } // junk: wrong title + "lot"
+    ]);
+    await estimatePair(db, { gameId: 1, condition: 'loose' }, search);
+    const e = getEstimate(db, 1, 'loose');
+    expect(e?.estimate).toBe(5000);   // junk listing excluded — not a 2-item median
+    expect(e?.listingCount).toBe(1);
+  });
 });
 
 describe('refreshEstimates', () => {

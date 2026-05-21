@@ -6,6 +6,7 @@ import { getEstimate, upsertEstimate } from '$lib/db/queries/prices';
 import { createRefreshEvent, insertSnapshot } from '$lib/db/queries/refresh';
 import { estimateFromListings } from './ebay/estimate';
 import { buildQuery } from './ebay/query';
+import { filterListings } from './ebay/filter';
 import type { Listing } from './ebay/filter';
 import type { Condition } from '$lib/types';
 
@@ -23,7 +24,8 @@ export async function estimatePair(db: DB, pair: Pair, search: SearchFn): Promis
   if (!game) return;
   const condition = pair.condition as Condition;
   const listings = await search(buildQuery(game, condition), condition);
-  const { estimate, listingCount } = estimateFromListings(listings.map((l) => l.priceCents));
+  const kept = filterListings(listings, game, condition);
+  const { estimate, listingCount } = estimateFromListings(kept.map((l) => l.priceCents));
   upsertEstimate(db, { gameId: pair.gameId, condition, estimate, listingCount });
 }
 
