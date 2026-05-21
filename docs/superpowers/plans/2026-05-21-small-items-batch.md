@@ -55,13 +55,16 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Not started.
+**Overall:** 1/3 phases shipped to the branch; branch `feat/small-items-batch` not yet merged.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Estimate Quality | ⬜ Not started | — | Tasks 1.1–1.4 |
+| 1 — Estimate Quality | ✅ Shipped | `f3b40ca`, `8cc365c`, `7e8b221`, `2d8a713` | Tasks 1.1–1.4; group review passed (3 rounds, 0 findings) |
 | 2 — CSV Export | ⬜ Not started | — | Tasks 2.1–2.3 |
 | 3 — Database Backup | ⬜ Not started | — | Tasks 3.1–3.2 |
+
+### Deviations
+- Task 1.4: the `page.test.ts` fixture `valueSource` values needed `as const` so TypeScript narrows them to the `'manual' | 'estimate' | 'unknown'` union `PageData` expects. Minimal, sound; the sibling `browse/page.test.ts` instead types the whole fixture `as PageData` — a cleaner alternative left as a possible later cleanup.
 
 ---
 
@@ -93,7 +96,7 @@ Work continues on the existing branch `feat/small-items-batch` (created for the 
 
 ## Phase 1 — Estimate Quality
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED to branch `feat/small-items-batch` at `f3b40ca`, `8cc365c`, `7e8b221`, `2d8a713` on 2026-05-21. Group review passed — 3 rounds, 0 substantive findings. Branch merge pending Phases 2–3.
 
 Adds the estimate age line, the stale treatment, and the low-confidence marker to the Collection screen. Tasks 1.1–1.3 build the pure/query layers; Task 1.4 wires them into the route.
 
