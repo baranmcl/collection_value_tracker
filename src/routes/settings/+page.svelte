@@ -167,10 +167,15 @@
   {/if}
 </section>
 
+<section class="card">
+  <h2>Backup</h2>
+  <p>Download a complete snapshot of the database — catalog, collection, and price history.</p>
+  <a class="button" href="/api/backup" download>Download backup</a>
+</section>
+
 {#if message}<p class="message">{message}</p>{/if}
 
 <p class="dim footnote">
-  Database lives at <code>data/collection.db</code> — back it up by copying that file.
   Nothing is sent anywhere except external price and catalog APIs.
 </p>
 
@@ -194,6 +199,12 @@
     border: none; border-radius: var(--radius); padding: var(--space-2) var(--space-3); font-weight: 600;
   }
   button:disabled { opacity: 0.5; cursor: default; }
+  .button {
+    display: inline-block; margin-top: var(--space-3);
+    background: var(--accent); color: var(--bg);
+    border: none; border-radius: var(--radius);
+    padding: var(--space-2) var(--space-3); font-weight: 600; text-decoration: none;
+  }
   .hint { margin-left: var(--space-2); font-size: var(--fs-sm); color: var(--text-dim); }
   .ok { color: var(--positive); }
   .bad { color: var(--negative); }
@@ -201,5 +212,4 @@
   .footnote { margin-top: var(--space-4); font-size: var(--fs-sm); }
   .message { margin-top: var(--space-3); font-family: var(--mono); font-size: var(--fs-sm); }
   ul { list-style: none; }
-  code { font-family: var(--mono); }
 </style>

@@ -70,6 +70,11 @@ describe('settings page', () => {
     expect(getByText(/8 updated, 0 errors/)).toBeInTheDocument();
     expect(queryByText(/×/)).not.toBeInTheDocument(); // no error-summary text
   });
+  it('has a Download backup link pointing at the backup route', () => {
+    const { getByText } = render(Page, { props: { data } });
+    const link = getByText('Download backup');
+    expect(link.getAttribute('href')).toBe('/api/backup');
+  });
   it('reads the refresh stream and shows the categorized result message', async () => {
     const ndjson = (objs: object[]) =>
       new Response(
