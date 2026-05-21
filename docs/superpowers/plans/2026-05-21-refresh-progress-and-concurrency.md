@@ -55,11 +55,16 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Task 1 shipped.
+**Overall:** 1/1 phase shipped. On branch `feat/refresh-progress`, awaiting integration.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Refresh Progress & Concurrency | 🚧 IN PROGRESS | Task 1: see below | Tasks 2–3 remaining |
+| 1 — Refresh Progress & Concurrency | ✅ Shipped | `3c89513`…`3b269a9` | Tasks 1–3, per-task + group review passed; 155 tests green |
+
+### Deviations
+
+- **Task 3:** the implementer added `ABOUTME` headers to `RefreshProgressBar.svelte` and `RefreshProgressBar.test.ts` (not in the plan's code). The reviews flagged this — no `.svelte` or `.test.ts` file in the project carries a header — and the headers were removed in commit `3b269a9` to match the plan and project convention.
+- **Task 1:** commit `3c89513` also bundled this plan file's step-checkbox edits — harmless, the plan is a living document.
 
 ---
 
@@ -88,7 +93,7 @@ Create a feature branch before Task 1 — do NOT execute on `main`. Suggested na
 
 ## Phase 1 — Refresh Progress & Concurrency
 
-**Execution Status:** 🚧 IN PROGRESS (2026-05-21T09:20:00Z) — branch `feat/refresh-progress`
+**Execution Status:** ✅ SHIPPED at `3c89513`…`3b269a9` on 2026-05-21 (branch `feat/refresh-progress`; per-task spec + code-quality reviews and the 5-round group review all passed; 155 tests green, `npm run check` clean)
 
 ### Task 1: Bounded-concurrency refresh with progress reporting
 
