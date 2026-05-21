@@ -55,11 +55,18 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Not started.
+**Overall:** 1/1 phases shipped.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Browse-Screen Performance | ⬜ Not started | — | Tasks 1–5 |
+| 1 — Browse-Screen Performance | ✅ Shipped | `24b473a`, `d7c5914`, `3fa90a9`, `b1d4f00`, `0fa2c35` | Tasks 1–5; group review passed (3 rounds, 0 substantive findings) |
+
+### Deviations
+- Task 5: `listGamesByConsole` had two callers outside the task's stated file list — `src/lib/sources/sync.test.ts` and `src/routes/api/sync/server.test.ts`. Both were rewired to assert via `browseGames(...).totalCount` instead; the assertion verifies the same thing (games persisted after sync) and is arguably stronger (unpaged SQL `COUNT(*)` vs array `.length`).
+- Task 5: `searchValue` initializer wrapped in `untrack(() => data.query)` to suppress a Svelte 5 state-capture warning; an `$effect` still re-syncs it on external `data.query` change.
+
+### Discoveries
+- Non-blocking: a hand-forged out-of-range URL such as `/browse?page=99` renders a nonsensical "Showing 9801–N" range. Unreachable through the UI (Next is disabled at the last page); the load clamps `page` only to `≥ 1`, not to the last valid page. Not fixed — outside the spec's pager scope.
 
 ---
 
@@ -86,7 +93,7 @@ Create a feature branch before Task 1 — do NOT execute on `main`. Suggested na
 
 ## Phase 1 — Browse-Screen Performance
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `24b473a`, `d7c5914`, `3fa90a9`, `b1d4f00`, `0fa2c35` on 2026-05-21 (branch `feat/browse-perf`). Group review passed — 3 rounds, 0 substantive findings.
 
 ### Task 1: Shared `fold` function
 
