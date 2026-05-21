@@ -55,12 +55,18 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Not started.
+**Overall:** 1/2 phases shipped. Executing on branch `feat/estimate-accuracy-refresh-errors`.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Estimate Accuracy | ⬜ Not started | — | Tasks 1.1–1.6 |
+| 1 — Estimate Accuracy | ✅ Shipped | `cade9a2`…`0a4e7f3` | Tasks 1.1–1.6, group review passed; 135 tests green |
 | 2 — Refresh Error Surfacing | ⬜ Not started | — | Tasks 2.1–2.3 |
+
+### Deviations
+
+- **Task 1.5:** `src/routes/api/collection/server.test.ts` was modified (not in the task's file list) — a `SearchFn` test fake there returned `number[]` and had to be updated to `Listing[]` for the suite to typecheck under the widened `SearchFn`. Test-fake type update only; no production code or test behavior changed. The plan's file list missed that the collection route has a test with a search fake.
+- **Phase 1 follow-ups beyond the literal task steps:** `ABOUTME:` headers were added to `server/ebay.ts` (commit `4783319`) and to `auth.ts`/`query.ts`/`refresh.ts` (commit `0a4e7f3`) — these files were modified by the phase but pre-existed without the mandatory header. Surfaced by the code-quality and group reviews.
+- **Extra review-driven test commits:** `a97c09d` (null-input coverage for `classifyError`) and `b006196` (read-description junk-marker coverage) — minor coverage gaps closed during review.
 
 ---
 
@@ -106,7 +112,7 @@ git commit -m "<subject from the task>" -m "Co-Authored-By: Claude Opus 4.7 (1M 
 
 ## Phase 1 — Estimate Accuracy
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED at `cade9a2`…`0a4e7f3` on 2026-05-21 (branch `feat/estimate-accuracy-refresh-errors`; per-task spec + code-quality reviews and the Phase 1 group review all passed; 135 tests green, `npm run check` clean)
 
 Goal of this phase: an estimate is computed only from eBay listings that actually match the game and condition. The phase widens the search boundary type and inserts a filter step.
 
