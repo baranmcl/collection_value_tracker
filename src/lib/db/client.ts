@@ -4,6 +4,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import * as schema from './schema';
+import { backfillFoldedTitles } from './queries/games';
 
 const DB_PATH = process.env.DB_PATH ?? 'data/collection.db';
 mkdirSync(dirname(DB_PATH), { recursive: true });
@@ -18,5 +19,8 @@ export const db = drizzle(sqlite, { schema });
 // is idempotent (it tracks applied migrations), so running it every boot is
 // safe and means a fresh `data/collection.db` works with zero manual setup.
 migrate(db, { migrationsFolder: 'drizzle' });
+
+// One-time fill of title_folded for games synced before that column existed.
+backfillFoldedTitles(db);
 
 export type DB = typeof db;

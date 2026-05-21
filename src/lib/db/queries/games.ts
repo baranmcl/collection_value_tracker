@@ -1,4 +1,5 @@
-import { and, asc, eq, like, sql } from 'drizzle-orm';
+import { and, asc, eq, isNull, like, sql } from 'drizzle-orm';
+import { fold } from '$lib/fold';
 import type { DB } from '../client';
 import { games } from '../schema';
 
@@ -18,8 +19,9 @@ export function upsertGames(db: DB, rows: CatalogGame[]): void {
   db.transaction((tx) => {
     for (const r of rows) {
       const boxartUrl = r.boxartUrl ?? null;
+      const titleFolded = fold(r.title);
       tx.insert(games)
-        .values({ ...r, boxartUrl, lastSyncedAt: now })
+        .values({ ...r, boxartUrl, titleFolded, lastSyncedAt: now })
         .onConflictDoUpdate({
           target: games.id,
           set: {
@@ -28,6 +30,7 @@ export function upsertGames(db: DB, rows: CatalogGame[]): void {
             region: r.region,
             releaseYear: r.releaseYear,
             boxartUrl,
+            titleFolded,
             lastSyncedAt: now
           }
         })
@@ -60,4 +63,16 @@ export function consoleCounts(db: DB): { console: string; count: number }[] {
     .groupBy(games.console)
     .orderBy(asc(games.console))
     .all();
+}
+
+/** Populate title_folded for any rows synced before the column existed.
+ *  Idempotent — only touches rows where title_folded IS NULL. */
+export function backfillFoldedTitles(db: DB): void {
+  const rows = db.select({ id: games.id, title: games.title }).from(games).where(isNull(games.titleFolded)).all();
+  if (rows.length === 0) return;
+  db.transaction((tx) => {
+    for (const r of rows) {
+      tx.update(games).set({ titleFolded: fold(r.title) }).where(eq(games.id, r.id)).run();
+    }
+  });
 }

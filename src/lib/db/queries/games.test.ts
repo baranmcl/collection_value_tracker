@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb } from '../test-db';
 import { games } from '../schema';
-import { upsertGames, listGamesByConsole, searchGames, consoleCounts, getGame } from './games';
+import { upsertGames, listGamesByConsole, searchGames, consoleCounts, getGame, backfillFoldedTitles } from './games';
 
 const SAMPLE = [
   { id: 1, console: 'SNES', title: 'Chrono Trigger', region: 'NTSC', releaseYear: 1995 },
@@ -40,5 +40,25 @@ describe('games queries', () => {
       { console: 'N64', count: 1 },
       { console: 'SNES', count: 2 }
     ]);
+  });
+
+  it('writes a folded title when upserting a game', () => {
+    const db = makeTestDb();
+    upsertGames(db, [{ id: 1, console: 'GBA', title: 'Pokémon Ruby', region: null, releaseYear: 2002 }]);
+    expect(getGame(db, 1)?.titleFolded).toBe('pokemon ruby');
+  });
+
+  it('backfills folded titles for rows that lack one, idempotently', () => {
+    const db = makeTestDb();
+    // A row inserted directly, without title_folded (simulating a pre-migration row).
+    db.insert(games).values({ id: 1, console: 'GBA', title: 'Métroid Fusion', lastSyncedAt: new Date() }).run();
+    expect(getGame(db, 1)?.titleFolded).toBeNull();
+
+    backfillFoldedTitles(db);
+    expect(getGame(db, 1)?.titleFolded).toBe('metroid fusion');
+
+    // Idempotent: a second run does not throw and does not change the value.
+    backfillFoldedTitles(db);
+    expect(getGame(db, 1)?.titleFolded).toBe('metroid fusion');
   });
 });
