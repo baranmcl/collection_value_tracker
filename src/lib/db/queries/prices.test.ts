@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { makeTestDb } from '../test-db';
 import { upsertGames } from './games';
-import { upsertEstimate, getEstimate, estimateMap, resolveItemValue } from './prices';
+import { addItem, updateItem } from './collection';
+import { upsertEstimate, getEstimate, estimateMap, resolveItemValue, collectionTotalCents } from './prices';
 
 function seed() {
   const db = makeTestDb();
@@ -34,5 +35,27 @@ describe('resolveItemValue', () => {
   });
   it('returns null when neither is known', () => {
     expect(resolveItemValue({ manualPrice: null }, null)).toBeNull();
+  });
+});
+
+describe('collectionTotalCents', () => {
+  it('sums manual prices and estimates, skipping unvalued items', () => {
+    const db = makeTestDb();
+    upsertGames(db, [
+      { id: 1, console: 'SNES', title: 'A', region: null, releaseYear: null },
+      { id: 2, console: 'N64', title: 'B', region: null, releaseYear: null },
+      { id: 3, console: 'SNES', title: 'C', region: null, releaseYear: null }
+    ]);
+    addItem(db, { gameId: 1, condition: 'loose' });
+    const manualId = addItem(db, { gameId: 2, condition: 'cib' });
+    addItem(db, { gameId: 3, condition: 'loose' }); // no estimate, no manual → unvalued
+    upsertEstimate(db, { gameId: 1, condition: 'loose', estimate: 5000, listingCount: 3 });
+    updateItem(db, manualId, { manualPrice: 9000 });
+
+    expect(collectionTotalCents(db)).toBe(14000); // 5000 estimate + 9000 manual
+  });
+
+  it('returns 0 for an empty collection', () => {
+    expect(collectionTotalCents(makeTestDb())).toBe(0);
   });
 });
