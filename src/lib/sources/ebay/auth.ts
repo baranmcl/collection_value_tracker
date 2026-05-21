@@ -1,3 +1,5 @@
+import { EbayError } from './errors';
+
 const TOKEN_URL = 'https://api.ebay.com/identity/v1/oauth2/token';
 const SCOPE = 'https://api.ebay.com/oauth/api_scope';
 
@@ -31,7 +33,7 @@ export function createTokenProvider(opts: TokenProviderOptions): TokenProvider {
         },
         body: `grant_type=client_credentials&scope=${encodeURIComponent(SCOPE)}`
       });
-      if (!res.ok) throw new Error(`eBay auth failed: ${res.status}`);
+      if (!res.ok) throw new EbayError(res.status, `eBay auth failed: ${res.status}`);
       const body = (await res.json()) as { access_token: string; expires_in: number };
       cached = { token: body.access_token, expiresAt: now() + body.expires_in * 1000 };
       return cached.token;

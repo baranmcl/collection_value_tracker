@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { createTokenProvider } from './auth';
+import { EbayError } from './errors';
 
 function fakeFetch(token: string, expiresIn = 7200) {
   return vi.fn(async () => new Response(
@@ -34,5 +35,12 @@ describe('createTokenProvider', () => {
     const f = vi.fn(async () => new Response('bad', { status: 401 }));
     const provider = createTokenProvider({ appId: 'id', clientSecret: 'sec', fetchFn: f, now: () => 0 });
     await expect(provider.getToken()).rejects.toThrow(/eBay auth/);
+  });
+
+  it('throws an EbayError carrying the HTTP status on auth failure', async () => {
+    const f = vi.fn(async () => new Response('bad', { status: 401 }));
+    const provider = createTokenProvider({ appId: 'id', clientSecret: 'sec', fetchFn: f, now: () => 0 });
+    await expect(provider.getToken()).rejects.toBeInstanceOf(EbayError);
+    await expect(provider.getToken()).rejects.toMatchObject({ status: 401, name: 'EbayError' });
   });
 });
