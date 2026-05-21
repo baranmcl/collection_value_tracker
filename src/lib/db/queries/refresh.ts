@@ -1,6 +1,6 @@
 // ABOUTME: Queries for refresh events and price snapshots — create and update a
 // ABOUTME: refresh event, insert snapshots, and compute top movers.
-import { desc, eq } from 'drizzle-orm';
+import { asc, desc, eq, isNotNull } from 'drizzle-orm';
 import type { DB } from '../client';
 import { priceSnapshots, refreshEvents, games } from '../schema';
 
@@ -88,4 +88,21 @@ export function topMovers(db: DB, limit: number): Mover[] {
   }
   movers.sort((a, b) => Math.abs(b.delta) - Math.abs(a.delta));
   return movers.slice(0, limit);
+}
+
+/** One point on the value-over-time chart. */
+export interface ValuePoint {
+  at: Date;
+  value: number; // integer cents
+}
+
+/** Total collection value at each refresh that recorded one, oldest first. */
+export function valueHistory(db: DB): ValuePoint[] {
+  return db
+    .select({ at: refreshEvents.triggeredAt, value: refreshEvents.totalValue })
+    .from(refreshEvents)
+    .where(isNotNull(refreshEvents.totalValue))
+    .orderBy(asc(refreshEvents.triggeredAt))
+    .all()
+    .map((r) => ({ at: r.at, value: r.value as number })); // isNotNull guarantees non-null
 }
