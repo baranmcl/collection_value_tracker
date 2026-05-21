@@ -27,5 +27,6 @@ describe('classifyError', () => {
     expect(classifyError(new Error('network down'))).toBe('other');
     expect(classifyError('boom')).toBe('other');
     expect(classifyError(undefined)).toBe('other');
+    expect(classifyError(null)).toBe('other');
   });
 });
