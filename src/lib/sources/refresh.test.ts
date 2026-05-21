@@ -3,7 +3,7 @@ import { makeTestDb } from '$lib/db/test-db';
 import { upsertGames } from '$lib/db/queries/games';
 import { addItem, updateItem } from '$lib/db/queries/collection';
 import { getEstimate } from '$lib/db/queries/prices';
-import { estimatePair, refreshEstimates } from './refresh';
+import { estimatePair, refreshEstimates, type RefreshProgress } from './refresh';
 import { EbayError } from './ebay/errors';
 import { latestRefreshEvent } from '$lib/db/queries/refresh';
 
@@ -13,6 +13,18 @@ function seed() {
     { id: 1, console: 'SNES', title: 'Chrono Trigger', region: null, releaseYear: null },
     { id: 2, console: 'N64', title: 'GoldenEye', region: null, releaseYear: null }
   ]);
+  return db;
+}
+
+function seedMany(n: number) {
+  const db = makeTestDb();
+  upsertGames(
+    db,
+    Array.from({ length: n }, (_, i) => ({
+      id: i + 1, console: 'GameCube', title: `Game ${i + 1}`, region: null, releaseYear: null
+    }))
+  );
+  for (let i = 1; i <= n; i++) addItem(db, { gameId: i, condition: 'loose' });
   return db;
 }
 
@@ -58,13 +70,15 @@ describe('refreshEstimates', () => {
       { priceCents: 4000, title: q, conditionId: 3000 },
       { priceCents: 4200, title: q, conditionId: 3000 }
     ]); // → median 4100
-    const progress: number[] = [];
-    const result = await refreshEstimates(db, { search, onProgress: (d) => progress.push(d) });
+    const progress: RefreshProgress[] = [];
+    const result = await refreshEstimates(db, { search, onProgress: (p) => progress.push(p) });
 
     expect(result.itemsUpdated).toBe(2);
     expect(result.errors).toBe(0);
     expect(getEstimate(db, 1, 'loose')?.estimate).toBe(4100);
-    expect(progress.at(-1)).toBe(2); // deterministic: every pair reported
+    expect(progress).toHaveLength(2); // one tick per pair claimed
+    expect(progress.every((p) => p.total === 2)).toBe(true);
+    expect(progress.map((p) => p.current).sort()).toEqual(['Chrono Trigger', 'GoldenEye']);
   });
 
   it('skips owned pairs whose item has a manual price', async () => {
@@ -94,31 +108,48 @@ describe('refreshEstimates', () => {
     expect(result.itemsUpdated).toBe(1);
   });
 
-  it('aborts the whole run when a search hits a rate limit', async () => {
-    const db = seed();
-    addItem(db, { gameId: 1, condition: 'loose' });
-    addItem(db, { gameId: 2, condition: 'cib' });
+  it('stops dispatching new pairs once a rate limit aborts the run', async () => {
+    const db = seedMany(12); // 12 pairs > concurrency 5
     const search = vi.fn(async () => {
       throw new EbayError(429, 'eBay search failed: 429');
     });
     const result = await refreshEstimates(db, { search, onProgress: () => {} });
     expect(result.aborted).toBe(true);
-    expect(result.errorsByReason.rate_limit).toBe(1);
-    expect(search).toHaveBeenCalledTimes(1);            // second pair never attempted
-    expect(getEstimate(db, 2, 'cib')).toBeUndefined();  // later pair left untouched
+    expect(search).toHaveBeenCalledTimes(5); // exactly the first wave; 6–12 never claimed
+    expect(result.errorsByReason.rate_limit).toBe(5);
+    expect(getEstimate(db, 12, 'loose')).toBeUndefined(); // a later pair, untouched
   });
 
-  it('aborts the whole run on an auth failure', async () => {
-    const db = seed();
-    addItem(db, { gameId: 1, condition: 'loose' });
-    addItem(db, { gameId: 2, condition: 'cib' });
+  it('stops dispatching new pairs once an auth failure aborts the run', async () => {
+    const db = seedMany(12);
     const search = vi.fn(async () => {
       throw new EbayError(401, 'eBay search failed: 401');
     });
     const result = await refreshEstimates(db, { search, onProgress: () => {} });
     expect(result.aborted).toBe(true);
-    expect(result.errorsByReason.auth).toBe(1);
-    expect(search).toHaveBeenCalledTimes(1);
+    expect(search).toHaveBeenCalledTimes(5);
+    expect(result.errorsByReason.auth).toBe(5);
+    expect(getEstimate(db, 12, 'loose')).toBeUndefined();
+  });
+
+  it('estimates every pair correctly when there are more pairs than the concurrency limit', async () => {
+    const db = seedMany(8); // 8 pairs > concurrency 5
+    const search = vi.fn(async (q: string) => [{ priceCents: 1500, title: q, conditionId: 3000 }]);
+    const result = await refreshEstimates(db, { search, onProgress: () => {} });
+    expect(result.itemsUpdated).toBe(8);
+    expect(result.errors).toBe(0);
+    expect(search).toHaveBeenCalledTimes(8);
+    for (let i = 1; i <= 8; i++) expect(getEstimate(db, i, 'loose')?.estimate).toBe(1500);
+  });
+
+  it('reports the current game title on each progress tick', async () => {
+    const db = seedMany(3);
+    const search = vi.fn(async (q: string) => [{ priceCents: 1000, title: q, conditionId: 3000 }]);
+    const progress: RefreshProgress[] = [];
+    await refreshEstimates(db, { search, onProgress: (p) => progress.push(p) });
+    expect(progress).toHaveLength(3);
+    expect(progress.map((p) => p.current).sort()).toEqual(['Game 1', 'Game 2', 'Game 3']);
+    expect(progress.every((p) => p.total === 3)).toBe(true);
   });
 
   it('persists an error summary for a failed run and null for a clean run', async () => {

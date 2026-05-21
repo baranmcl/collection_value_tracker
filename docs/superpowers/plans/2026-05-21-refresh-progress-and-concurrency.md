@@ -55,11 +55,11 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** Not started.
+**Overall:** Task 1 shipped.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
-| 1 — Refresh Progress & Concurrency | ⬜ Not started | — | Tasks 1–3 |
+| 1 — Refresh Progress & Concurrency | 🚧 IN PROGRESS | Task 1: see below | Tasks 2–3 remaining |
 
 ---
 
@@ -88,7 +88,7 @@ Create a feature branch before Task 1 — do NOT execute on `main`. Suggested na
 
 ## Phase 1 — Refresh Progress & Concurrency
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** 🚧 IN PROGRESS (2026-05-21T09:20:00Z) — branch `feat/refresh-progress`
 
 ### Task 1: Bounded-concurrency refresh with progress reporting
 
@@ -106,7 +106,7 @@ Create a feature branch before Task 1 — do NOT execute on `main`. Suggested na
 
 **Other callers to keep working:** `estimatePair` is also called by `src/routes/api/collection/logic.ts` with a plain `{ gameId, condition }` object. This task must NOT widen the `Pair` interface (that would break that caller). `pairsToRefresh` returns a new internal type `RefreshPair` that extends `Pair` with `title` — `RefreshPair` is assignable to `Pair`, so `estimatePair(db, refreshPair, search)` still type-checks.
 
-- [ ] **Step 1: Update the failing tests**
+- [x] **Step 1: Update the failing tests**
 
 In `src/lib/sources/refresh.test.ts`:
 
@@ -211,12 +211,12 @@ Both are deterministic by construction: the 5 pool workers each synchronously cl
 
 (e) Leave every other test in `refresh.test.ts` unchanged — the `estimatePair` tests, `'skips owned pairs whose item has a manual price'`, `'counts a non-fatal error and continues to the next pair'`, and `'persists an error summary for a failed run and null for a clean run'` all still hold under the worker pool (each involves ≤ 2 pairs or a deterministic per-call fake).
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `npx vitest run src/lib/sources/refresh.test.ts`
 Expected: FAIL — against the current serial `refreshEstimates`, the changed/new tests fail: the `'re-estimates'` test's `p.total` assertion (the serial `onProgress` passes a number, not an object), the two abort tests' `search`-called-5-times assertions (serial aborts after 1 call), and the progress test's `current` assertion. Note: `'estimates every pair correctly…'` may already pass against the serial code — serial also estimates all 8 pairs — which is fine; it is a regression guard for the concurrent version, not a behavior-driving test.
 
-- [ ] **Step 3: Rewrite `refresh.ts`**
+- [x] **Step 3: Rewrite `refresh.ts`**
 
 In `src/lib/sources/refresh.ts`:
 
@@ -340,17 +340,17 @@ export async function refreshEstimates(db: DB, opts: RefreshOptions): Promise<Re
 
 Leave the ABOUTME header, `SearchFn`, `Pair`, `estimatePair`, `RefreshResult`, and `summarizeErrors` unchanged.
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `npx vitest run src/lib/sources/refresh.test.ts`
 Expected: PASS — all `estimatePair` and `refreshEstimates` tests, including the three new ones.
 
-- [ ] **Step 5: Run the full suite and type check**
+- [x] **Step 5: Run the full suite and type check**
 
 Run: `npx vitest run` — Expected: PASS, whole suite (the existing `/api/refresh/+server.ts` still compiles: its `onProgress: () => {}` is assignable to the widened `OnProgress`).
 Run: `npm run check` — Expected: 0 errors, 0 warnings.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```
 git add src/lib/sources/refresh.ts src/lib/sources/refresh.test.ts
