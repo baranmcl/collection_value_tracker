@@ -2,6 +2,7 @@ import { env } from '$env/dynamic/private';
 import { createTokenProvider } from '$lib/sources/ebay/auth';
 import { searchListings } from '$lib/sources/ebay/client';
 import type { SearchFn } from '$lib/sources/refresh';
+import type { Condition } from '$lib/types';
 
 let provider: ReturnType<typeof createTokenProvider> | null = null;
 
@@ -12,9 +13,9 @@ export function ebaySearch(): SearchFn {
     throw new Error('eBay credentials missing — set EBAY_APP_ID and EBAY_CLIENT_SECRET in .env');
   }
   provider ??= createTokenProvider({ appId: env.EBAY_APP_ID, clientSecret: env.EBAY_CLIENT_SECRET });
-  return async (query: string) => {
+  return async (query: string, condition: Condition) => {
     const token = await provider!.getToken();
-    return searchListings(token, query);
+    return searchListings(token, query, condition);
   };
 }
 

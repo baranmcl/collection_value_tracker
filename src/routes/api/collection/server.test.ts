@@ -9,7 +9,11 @@ describe('addCollectionItem', () => {
   it('adds the item then estimates its price', async () => {
     const db = makeTestDb();
     upsertGames(db, [{ id: 1, console: 'SNES', title: 'X', region: null, releaseYear: null }]);
-    const search = vi.fn(async () => [1000, 2000, 3000]);
+    const search = vi.fn(async (q: string) => [
+      { priceCents: 1000, title: q, conditionId: 3000 },
+      { priceCents: 2000, title: q, conditionId: 3000 },
+      { priceCents: 3000, title: q, conditionId: 3000 }
+    ]);
     const res = await addCollectionItem(db, { gameId: 1, condition: 'loose' }, search);
     expect(res.itemId).toBeTypeOf('number');
     expect(listCollection(db)).toHaveLength(1);

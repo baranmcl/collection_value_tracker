@@ -17,7 +17,11 @@ function seed() {
 describe('estimatePair', () => {
   it('searches eBay and writes a price estimate for one (game, condition)', async () => {
     const db = seed();
-    const search = vi.fn(async () => [5000, 6000, 7000]); // deterministic resolved mock
+    const search = vi.fn(async (q: string) => [
+      { priceCents: 5000, title: q, conditionId: 3000 },
+      { priceCents: 6000, title: q, conditionId: 3000 },
+      { priceCents: 7000, title: q, conditionId: 3000 }
+    ]);
     await estimatePair(db, { gameId: 1, condition: 'loose' }, search);
     expect(getEstimate(db, 1, 'loose')?.estimate).toBe(6000);
     expect(search).toHaveBeenCalledOnce();
@@ -35,7 +39,10 @@ describe('refreshEstimates', () => {
     const db = seed();
     addItem(db, { gameId: 1, condition: 'loose' });
     addItem(db, { gameId: 2, condition: 'cib' });
-    const search = vi.fn(async () => [4000, 4200]); // → median 4100
+    const search = vi.fn(async (q: string) => [
+      { priceCents: 4000, title: q, conditionId: 3000 },
+      { priceCents: 4200, title: q, conditionId: 3000 }
+    ]); // → median 4100
     const progress: number[] = [];
     const result = await refreshEstimates(db, { search, onProgress: (d) => progress.push(d) });
 
@@ -49,7 +56,7 @@ describe('refreshEstimates', () => {
     const db = seed();
     const itemId = addItem(db, { gameId: 1, condition: 'loose' });
     updateItem(db, itemId, { manualPrice: 9999 });
-    const search = vi.fn(async () => [1000]);
+    const search = vi.fn(async (q: string) => [{ priceCents: 1000, title: q, conditionId: 3000 }]);
     const result = await refreshEstimates(db, { search, onProgress: () => {} });
     expect(search).not.toHaveBeenCalled();
     expect(result.itemsUpdated).toBe(0);
@@ -60,10 +67,10 @@ describe('refreshEstimates', () => {
     addItem(db, { gameId: 1, condition: 'loose' });
     addItem(db, { gameId: 2, condition: 'cib' });
     let call = 0;
-    const search = vi.fn(async () => {
+    const search = vi.fn(async (q: string) => {
       call++;
       if (call === 1) throw new Error('rate limited');
-      return [3000];
+      return [{ priceCents: 3000, title: q, conditionId: 3000 }];
     });
     const result = await refreshEstimates(db, { search, onProgress: () => {} });
     expect(result.errors).toBe(1);

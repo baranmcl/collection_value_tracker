@@ -6,10 +6,11 @@ import { getEstimate, upsertEstimate } from '$lib/db/queries/prices';
 import { createRefreshEvent, insertSnapshot } from '$lib/db/queries/refresh';
 import { estimateFromListings } from './ebay/estimate';
 import { buildQuery } from './ebay/query';
+import type { Listing } from './ebay/filter';
 import type { Condition } from '$lib/types';
 
-/** Runs an eBay search for a query, returning listing prices in cents. */
-export type SearchFn = (query: string) => Promise<number[]>;
+/** Runs an eBay search for a query + condition, returning matching listings. */
+export type SearchFn = (query: string, condition: Condition) => Promise<Listing[]>;
 
 export interface Pair {
   gameId: number;
@@ -20,9 +21,10 @@ export interface Pair {
 export async function estimatePair(db: DB, pair: Pair, search: SearchFn): Promise<void> {
   const game = getGame(db, pair.gameId);
   if (!game) return;
-  const prices = await search(buildQuery(game, pair.condition as Condition));
-  const { estimate, listingCount } = estimateFromListings(prices);
-  upsertEstimate(db, { gameId: pair.gameId, condition: pair.condition as Condition, estimate, listingCount });
+  const condition = pair.condition as Condition;
+  const listings = await search(buildQuery(game, condition), condition);
+  const { estimate, listingCount } = estimateFromListings(listings.map((l) => l.priceCents));
+  upsertEstimate(db, { gameId: pair.gameId, condition, estimate, listingCount });
 }
 
 export interface RefreshOptions {
