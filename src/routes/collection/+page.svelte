@@ -81,7 +81,7 @@
       {#each consoles as c}<option value={c}>{c}</option>{/each}
     </select>
   </label>
-    <a class="export" href="/api/export" download>Export CSV</a>
+  <a class="export" href="/api/export" download>Export CSV</a>
 </div>
 
 <div class="row header">
