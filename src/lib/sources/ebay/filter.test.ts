@@ -34,6 +34,14 @@ describe('filterListings — junk exclusion', () => {
     ];
     expect(filterListings(input, { title: 'Chrono Trigger' }, 'loose')).toHaveLength(0);
   });
+  it('drops a "read description" listing', () => {
+    const kept = filterListings(
+      [listing({ title: 'Chrono Trigger SNES read description' })],
+      { title: 'Chrono Trigger' },
+      'loose'
+    );
+    expect(kept).toHaveLength(0);
+  });
   it('drops a listing with a quantity multiplier like x3', () => {
     const kept = filterListings([listing({ title: 'Chrono Trigger SNES x3' })], { title: 'Chrono Trigger' }, 'loose');
     expect(kept).toHaveLength(0);
