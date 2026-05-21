@@ -1,3 +1,5 @@
+// ABOUTME: Queries for refresh events and price snapshots — create and update a
+// ABOUTME: refresh event, insert snapshots, and compute top movers.
 import { desc, eq } from 'drizzle-orm';
 import type { DB } from '../client';
 import { priceSnapshots, refreshEvents, games } from '../schema';

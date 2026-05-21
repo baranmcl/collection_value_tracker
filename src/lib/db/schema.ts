@@ -1,3 +1,5 @@
+// ABOUTME: Drizzle schema — the games catalog, owned collection items, and the
+// ABOUTME: price-estimate, price-snapshot, and refresh-event tables.
 import { sqliteTable, integer, text, unique } from 'drizzle-orm/sqlite-core';
 
 export const games = sqliteTable('games', {
