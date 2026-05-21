@@ -9,6 +9,7 @@ export const games = sqliteTable('games', {
   region: text('region'),
   releaseYear: integer('release_year'),
   boxartUrl: text('boxart_url'), // front cover thumbnail URL, nullable
+  titleFolded: text('title_folded'), // accent-folded lowercase title, for search/sort
   lastSyncedAt: integer('last_synced_at', { mode: 'timestamp' }).notNull()
 });
 

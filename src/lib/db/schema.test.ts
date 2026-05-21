@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { eq } from 'drizzle-orm';
 import { makeTestDb } from './test-db';
 import { games, collectionItems, priceEstimates, refreshEvents } from './schema';
 
@@ -46,5 +47,16 @@ describe('schema', () => {
       .run();
     const rows = db.select().from(refreshEvents).all();
     expect(rows.map((r) => r.totalValue)).toContain(508611);
+  });
+
+  it('stores a nullable folded title on a game', () => {
+    const db = makeTestDb();
+    db.insert(games).values({ id: 1, console: 'SNES', title: 'A', lastSyncedAt: new Date() }).run();
+    expect(db.select().from(games).get()?.titleFolded).toBeNull();
+
+    db.insert(games)
+      .values({ id: 2, console: 'SNES', title: 'Pokémon', titleFolded: 'pokemon', lastSyncedAt: new Date() })
+      .run();
+    expect(db.select().from(games).where(eq(games.id, 2)).get()?.titleFolded).toBe('pokemon');
   });
 });

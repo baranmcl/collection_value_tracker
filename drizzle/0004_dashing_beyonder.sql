@@ -1,0 +1,1 @@
+ALTER TABLE `games` ADD `title_folded` text;
