@@ -50,4 +50,22 @@ describe('settings page', () => {
     const { getByText } = render(Page, { props: { data: withHistory } });
     expect(getByText(/rate_limit×1; other×1 \(aborted\)/)).toBeInTheDocument();
   });
+  it('renders a clean history row without an error summary', () => {
+    const cleanRow = {
+      ...data,
+      refreshHistory: [
+        {
+          id: 1,
+          triggeredAt: new Date('2026-05-20T10:00:00Z'),
+          source: 'ebay_browse',
+          itemsUpdated: 8,
+          errors: 0,
+          errorSummary: null
+        }
+      ]
+    };
+    const { getByText, queryByText } = render(Page, { props: { data: cleanRow } });
+    expect(getByText(/8 updated, 0 errors/)).toBeInTheDocument();
+    expect(queryByText(/×/)).not.toBeInTheDocument(); // no error-summary text
+  });
 });

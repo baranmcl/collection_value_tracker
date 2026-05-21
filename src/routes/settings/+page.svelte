@@ -37,7 +37,7 @@
 
   function refreshMessage(r: RefreshResult): string {
     if (r.aborted) {
-      const reason = r.errorsByReason.auth > 0 ? 'an authentication error' : 'a rate limit';
+      const reason = (r.errorsByReason?.auth ?? 0) > 0 ? 'an authentication error' : 'a rate limit';
       return `Refresh aborted after ${reason} — ${r.itemsUpdated} estimate(s) changed before stopping.`;
     }
     if (r.errors > 0) {
