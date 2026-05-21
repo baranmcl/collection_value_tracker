@@ -16,6 +16,17 @@ export function createRefreshEvent(db: DB, e: NewRefreshEvent): number {
     .get().id;
 }
 
+export interface RefreshEventUpdate {
+  itemsUpdated: number;
+  errors: number;
+  errorSummary: string | null;
+}
+
+/** Write the final tallies onto a refresh event when a run finishes. */
+export function updateRefreshEvent(db: DB, id: number, u: RefreshEventUpdate): void {
+  db.update(refreshEvents).set(u).where(eq(refreshEvents.id, id)).run();
+}
+
 export function latestRefreshEvent(db: DB) {
   return db.select().from(refreshEvents).orderBy(desc(refreshEvents.id)).limit(1).get();
 }

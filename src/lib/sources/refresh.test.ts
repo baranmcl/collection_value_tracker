@@ -4,6 +4,8 @@ import { upsertGames } from '$lib/db/queries/games';
 import { addItem, updateItem } from '$lib/db/queries/collection';
 import { getEstimate } from '$lib/db/queries/prices';
 import { estimatePair, refreshEstimates } from './refresh';
+import { EbayError } from './ebay/errors';
+import { latestRefreshEvent } from '$lib/db/queries/refresh';
 
 function seed() {
   const db = makeTestDb();
@@ -75,18 +77,70 @@ describe('refreshEstimates', () => {
     expect(result.itemsUpdated).toBe(0);
   });
 
-  it('counts an error and continues when one search throws', async () => {
+  it('counts a non-fatal error and continues to the next pair', async () => {
     const db = seed();
     addItem(db, { gameId: 1, condition: 'loose' });
     addItem(db, { gameId: 2, condition: 'cib' });
     let call = 0;
     const search = vi.fn(async (q: string) => {
       call++;
-      if (call === 1) throw new Error('rate limited');
+      if (call === 1) throw new Error('network blip'); // plain Error → classified 'other'
       return [{ priceCents: 3000, title: q, conditionId: 3000 }];
     });
     const result = await refreshEstimates(db, { search, onProgress: () => {} });
     expect(result.errors).toBe(1);
+    expect(result.errorsByReason).toEqual({ auth: 0, rate_limit: 0, other: 1 });
+    expect(result.aborted).toBe(false);
     expect(result.itemsUpdated).toBe(1);
+  });
+
+  it('aborts the whole run when a search hits a rate limit', async () => {
+    const db = seed();
+    addItem(db, { gameId: 1, condition: 'loose' });
+    addItem(db, { gameId: 2, condition: 'cib' });
+    let call = 0;
+    const search = vi.fn(async (q: string) => {
+      call++;
+      if (call === 1) throw new EbayError(429, 'eBay search failed: 429');
+      return [{ priceCents: 3000, title: q, conditionId: 3000 }];
+    });
+    const result = await refreshEstimates(db, { search, onProgress: () => {} });
+    expect(result.aborted).toBe(true);
+    expect(result.errorsByReason.rate_limit).toBe(1);
+    expect(search).toHaveBeenCalledTimes(1);            // second pair never attempted
+    expect(getEstimate(db, 2, 'cib')).toBeUndefined();  // later pair left untouched
+  });
+
+  it('aborts the whole run on an auth failure', async () => {
+    const db = seed();
+    addItem(db, { gameId: 1, condition: 'loose' });
+    addItem(db, { gameId: 2, condition: 'cib' });
+    const search = vi.fn(async () => {
+      throw new EbayError(401, 'eBay search failed: 401');
+    });
+    const result = await refreshEstimates(db, { search, onProgress: () => {} });
+    expect(result.aborted).toBe(true);
+    expect(result.errorsByReason.auth).toBe(1);
+    expect(search).toHaveBeenCalledTimes(1);
+  });
+
+  it('persists an error summary for a failed run and null for a clean run', async () => {
+    const cleanDb = seed();
+    addItem(cleanDb, { gameId: 1, condition: 'loose' });
+    await refreshEstimates(cleanDb, {
+      search: async (q: string) => [{ priceCents: 3000, title: q, conditionId: 3000 }],
+      onProgress: () => {}
+    });
+    expect(latestRefreshEvent(cleanDb)?.errorSummary).toBeNull();
+
+    const failDb = seed();
+    addItem(failDb, { gameId: 1, condition: 'loose' });
+    await refreshEstimates(failDb, {
+      search: async () => {
+        throw new EbayError(429, 'eBay search failed: 429');
+      },
+      onProgress: () => {}
+    });
+    expect(latestRefreshEvent(failDb)?.errorSummary).toBe('rate_limit×1 (aborted)');
   });
 });

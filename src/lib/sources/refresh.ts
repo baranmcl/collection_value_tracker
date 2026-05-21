@@ -1,11 +1,12 @@
 // ABOUTME: Price-estimate orchestration — estimates one (game, condition) pair
 // ABOUTME: and re-estimates every owned pair, recording snapshots and events.
-import { asc, eq, isNull } from 'drizzle-orm';
+import { asc, isNull } from 'drizzle-orm';
 import type { DB } from '$lib/db/client';
-import { collectionItems, refreshEvents } from '$lib/db/schema';
+import { collectionItems } from '$lib/db/schema';
 import { getGame } from '$lib/db/queries/games';
 import { getEstimate, upsertEstimate } from '$lib/db/queries/prices';
-import { createRefreshEvent, insertSnapshot } from '$lib/db/queries/refresh';
+import { createRefreshEvent, insertSnapshot, updateRefreshEvent } from '$lib/db/queries/refresh';
+import { classifyError, type ErrorReason } from './ebay/errors';
 import { estimateFromListings } from './ebay/estimate';
 import { buildQuery } from './ebay/query';
 import { filterListings } from './ebay/filter';
@@ -39,6 +40,8 @@ export interface RefreshOptions {
 export interface RefreshResult {
   itemsUpdated: number;
   errors: number;
+  errorsByReason: Record<ErrorReason, number>;
+  aborted: boolean;
   refreshEventId: number;
 }
 
@@ -57,13 +60,23 @@ function pairsToRefresh(db: DB): Pair[] {
     .all();
 }
 
+/** Compact human summary of a run's failures, or null when there were none. */
+function summarizeErrors(byReason: Record<ErrorReason, number>, aborted: boolean): string | null {
+  const parts = (['auth', 'rate_limit', 'other'] as const)
+    .filter((r) => byReason[r] > 0)
+    .map((r) => `${r}×${byReason[r]}`);
+  if (parts.length === 0) return null;
+  return parts.join('; ') + (aborted ? ' (aborted)' : '');
+}
+
 /** Re-estimate every owned pair, snapshot changed estimates, record one refresh event. */
 export async function refreshEstimates(db: DB, opts: RefreshOptions): Promise<RefreshResult> {
   const pairs = pairsToRefresh(db);
   const eventId = createRefreshEvent(db, { source: `ebay_browse:${new Date().toISOString()}`, itemsUpdated: 0, errors: 0 });
 
   let itemsUpdated = 0;
-  let errors = 0;
+  const errorsByReason: Record<ErrorReason, number> = { auth: 0, rate_limit: 0, other: 0 };
+  let aborted = false;
 
   for (let i = 0; i < pairs.length; i++) {
     const pair = pairs[i];
@@ -83,12 +96,21 @@ export async function refreshEstimates(db: DB, opts: RefreshOptions): Promise<Re
         // (a first-time estimate from null counts as a change).
         if (after.estimate !== before) itemsUpdated++;
       }
-    } catch {
-      errors++;
+    } catch (e) {
+      const reason = classifyError(e);
+      errorsByReason[reason]++;
+      // auth and rate_limit are fatal — continuing burns quota and fails
+      // every remaining pair. Stop the run; later pairs keep their estimates.
+      if (reason === 'auth' || reason === 'rate_limit') {
+        aborted = true;
+        opts.onProgress(i + 1, pairs.length);
+        break;
+      }
     }
     opts.onProgress(i + 1, pairs.length);
   }
 
-  db.update(refreshEvents).set({ itemsUpdated, errors }).where(eq(refreshEvents.id, eventId)).run();
-  return { itemsUpdated, errors, refreshEventId: eventId };
+  const errors = errorsByReason.auth + errorsByReason.rate_limit + errorsByReason.other;
+  updateRefreshEvent(db, eventId, { itemsUpdated, errors, errorSummary: summarizeErrors(errorsByReason, aborted) });
+  return { itemsUpdated, errors, errorsByReason, aborted, refreshEventId: eventId };
 }
