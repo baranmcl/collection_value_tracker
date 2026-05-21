@@ -1,3 +1,5 @@
+// ABOUTME: eBay OAuth client-credentials token provider — fetches and caches
+// ABOUTME: an application access token, refreshing it shortly before expiry.
 import { EbayError } from './errors';
 
 const TOKEN_URL = 'https://api.ebay.com/identity/v1/oauth2/token';

@@ -1,3 +1,5 @@
+// ABOUTME: Price-estimate orchestration — estimates one (game, condition) pair
+// ABOUTME: and re-estimates every owned pair, recording snapshots and events.
 import { asc, eq, isNull } from 'drizzle-orm';
 import type { DB } from '$lib/db/client';
 import { collectionItems, refreshEvents } from '$lib/db/schema';

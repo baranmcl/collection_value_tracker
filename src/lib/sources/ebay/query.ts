@@ -1,3 +1,5 @@
+// ABOUTME: eBay search-query construction — combines game title, console, and
+// ABOUTME: per-condition keywords into the Browse API query string.
 import type { Condition } from '$lib/types';
 
 /** Condition keyword map — the single place to tune estimate accuracy
