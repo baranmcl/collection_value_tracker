@@ -55,16 +55,18 @@ notes and commit messages.
 
 ## Execution Status
 
-**Overall:** 2/3 phases shipped to the branch; branch `feat/small-items-batch` not yet merged.
+**Overall:** 3/3 phases shipped to the branch; all group reviews passed. Branch `feat/small-items-batch` ready to merge.
 
 | Phase | Status | Ship SHA(s) | Notes |
 |---|---|---|---|
 | 1 — Estimate Quality | ✅ Shipped | `f3b40ca`, `8cc365c`, `7e8b221`, `2d8a713` | Tasks 1.1–1.4; group review passed (3 rounds, 0 findings) |
 | 2 — CSV Export | ✅ Shipped | `724755d`, `6344ebf`, `f4bb069`, `b8e036a` | Tasks 2.1–2.3 (`b8e036a` = indentation fix); group review passed (3 rounds, 0 findings) |
-| 3 — Database Backup | ⬜ Not started | — | Tasks 3.1–3.2 |
+| 3 — Database Backup | ✅ Shipped | `89fd2bf`, `74b3ef4` | Tasks 3.1–3.2; group review passed (3 rounds, 0 findings) |
 
 ### Deviations
 - Task 1.4: the `page.test.ts` fixture `valueSource` values needed `as const` so TypeScript narrows them to the `'manual' | 'estimate' | 'unknown'` union `PageData` expects. Minimal, sound; the sibling `browse/page.test.ts` instead types the whole fixture `as PageData` — a cleaner alternative left as a possible later cleanup.
+- Task 3.2: removed an orphaned `code { font-family: var(--mono); }` CSS rule in `settings/+page.svelte` — it became a dead/unused selector once the footnote's `<code>data/collection.db</code>` element was removed. In-scope cleanup; no rule exception needed.
+- Task 3.1 / spec §Design 3: the spec prose said the `/api/backup` handler "returns a 500 with a short message" on a `VACUUM INTO` failure. The plan's approved Task 3.1 `+server.ts` is the bare one-line wrapper (matching the sibling `export/+server.ts`); SvelteKit auto-converts an uncaught handler throw into a 500, so the user-observable behavior matches the spec. No explicit try/catch was added.
 
 ---
 
@@ -915,7 +917,7 @@ When the phase ships, update the banner and the top-of-plan table per the Living
 
 ## Phase 3 — Database Backup
 
-**Execution Status:** ⬜ NOT STARTED
+**Execution Status:** ✅ SHIPPED to branch `feat/small-items-batch` at `89fd2bf`, `74b3ef4` on 2026-05-21. Group review passed — 3 rounds, 0 substantive findings.
 
 Adds a one-click download of a consistent SQLite snapshot. Independent of Phases 1 and 2.
 
