@@ -1,11 +1,13 @@
 <script lang="ts">
   import { untrack } from 'svelte';
   import type { PageData } from './$types';
-  import type { RefreshResult } from '$lib/sources/refresh';
+  import type { RefreshResult, RefreshProgress } from '$lib/sources/refresh';
+  import RefreshProgressBar from '$lib/components/RefreshProgressBar.svelte';
   let { data }: { data: PageData } = $props();
   let syncing = $state(false);
   let refreshing = $state(false);
   let message = $state('');
+  let refreshProgress = $state<RefreshProgress | null>(null);
 
   // Consoles to sync — all selected by default. `untrack` snapshots the
   // initial platform list; the set is user-controlled from here on.
@@ -49,18 +51,45 @@
   async function runRefresh() {
     refreshing = true;
     message = '';
+    refreshProgress = null;
     try {
       const res = await fetch('/api/refresh', { method: 'POST' });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.message ?? 'failed');
+      if (!res.ok || !res.body) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message ?? 'failed');
+      }
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = '';
+      let result: RefreshResult | null = null;
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf('\n')) !== -1) {
+          const raw = buf.slice(0, nl);
+          buf = buf.slice(nl + 1);
+          if (raw.length === 0) continue;
+          const event = JSON.parse(raw);
+          if (event.type === 'progress') {
+            refreshProgress = { done: event.done, total: event.total, current: event.current };
+          } else if (event.type === 'result') {
+            result = event;
+          }
+        }
+      }
+      refreshProgress = null;
+      if (!result) throw new Error('refresh ended without a result');
       // Clean run: reload so counts and history update. Failed/aborted run:
       // stay on the page and show the categorized message.
-      if (body.aborted || body.errors > 0) {
-        message = refreshMessage(body);
+      if (result.aborted || result.errors > 0) {
+        message = refreshMessage(result);
       } else {
         location.reload();
       }
     } catch (e) {
+      refreshProgress = null;
       message = e instanceof Error ? e.message : 'error';
     } finally {
       refreshing = false;
@@ -102,6 +131,9 @@
   <button onclick={runRefresh} disabled={refreshing}>
     {refreshing ? 'Refreshing…' : 'Refresh estimates'}
   </button>
+  {#if refreshProgress}
+    <RefreshProgressBar progress={refreshProgress} />
+  {/if}
 </section>
 
 <section class="card">

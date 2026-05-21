@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/svelte';
 import Page from './+page.svelte';
 
@@ -67,5 +67,30 @@ describe('settings page', () => {
     const { getByText, queryByText } = render(Page, { props: { data: cleanRow } });
     expect(getByText(/8 updated, 0 errors/)).toBeInTheDocument();
     expect(queryByText(/×/)).not.toBeInTheDocument(); // no error-summary text
+  });
+  it('reads the refresh stream and shows the categorized result message', async () => {
+    const ndjson = (objs: object[]) =>
+      new Response(
+        new ReadableStream<Uint8Array>({
+          start(c) {
+            const enc = new TextEncoder();
+            for (const o of objs) c.enqueue(enc.encode(JSON.stringify(o) + '\n'));
+            c.close();
+          }
+        }),
+        { status: 200, headers: { 'content-type': 'application/x-ndjson' } }
+      );
+    const fetchMock = vi.fn(async () =>
+      ndjson([
+        { type: 'progress', done: 0, total: 2, current: 'Pikmin' },
+        { type: 'progress', done: 1, total: 2, current: 'GoldenEye' },
+        { type: 'result', itemsUpdated: 1, errors: 1, errorsByReason: { auth: 0, rate_limit: 1, other: 0 }, aborted: true, refreshEventId: 7 }
+      ])
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { getByRole, findByText } = render(Page, { props: { data } });
+    getByRole('button', { name: /refresh estimates/i }).click();
+    expect(await findByText(/aborted after a rate limit/i)).toBeInTheDocument();
+    vi.unstubAllGlobals();
   });
 });
